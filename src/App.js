@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Header from './components/Header';
 import SearchFilter from './components/SearchFilter';
 import PropertyList from './components/PropertyList';
@@ -15,21 +15,25 @@ function App() {
   });
   const [selectedProperty, setSelectedProperty] = useState(null);
 
-  const filteredProperties = properties.filter(property => {
-    if (filters.type !== 'all' && property.type !== filters.type) {
-      return false;
-    }
-    if (filters.minPrice && property.price < parseInt(filters.minPrice)) {
-      return false;
-    }
-    if (filters.maxPrice && property.price > parseInt(filters.maxPrice)) {
-      return false;
-    }
-    if (filters.bedrooms !== '0' && property.bedrooms < parseInt(filters.bedrooms)) {
-      return false;
-    }
-    return true;
-  });
+  const filteredProperties = useMemo(() => {
+    return properties.filter(property => {
+      if (filters.type !== 'all' && property.type !== filters.type) {
+        return false;
+      }
+      const minPrice = filters.minPrice ? parseInt(filters.minPrice, 10) : 0;
+      const maxPrice = filters.maxPrice ? parseInt(filters.maxPrice, 10) : Infinity;
+      if (minPrice && property.price < minPrice) {
+        return false;
+      }
+      if (maxPrice !== Infinity && property.price > maxPrice) {
+        return false;
+      }
+      if (filters.bedrooms !== '0' && property.bedrooms < parseInt(filters.bedrooms, 10)) {
+        return false;
+      }
+      return true;
+    });
+  }, [filters]);
 
   return (
     <div className="App">

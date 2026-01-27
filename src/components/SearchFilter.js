@@ -23,6 +23,8 @@ function SearchFilter({ filters, onFilterChange }) {
           type="number"
           id="minPrice"
           placeholder="Min"
+          min="0"
+          step="1"
           value={filters.minPrice}
           onChange={(e) => onFilterChange({ ...filters, minPrice: e.target.value })}
         />
@@ -34,6 +36,8 @@ function SearchFilter({ filters, onFilterChange }) {
           type="number"
           id="maxPrice"
           placeholder="Max"
+          min="0"
+          step="1"
           value={filters.maxPrice}
           onChange={(e) => onFilterChange({ ...filters, maxPrice: e.target.value })}
         />

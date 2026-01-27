@@ -1,19 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './PropertyDetails.css';
 
 function PropertyDetails({ property, onClose }) {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
   if (!property) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="property-title">
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="close-button" onClick={onClose}>×</button>
+        <button className="close-button" onClick={onClose} aria-label="Close">×</button>
         <img src={property.image} alt={property.title} className="detail-image" />
         <div className="detail-content">
           <div className="property-type-badge">
             {property.type === 'apartment' ? '🏢 Apartment' : '🏡 House'}
           </div>
-          <h2>{property.title}</h2>
+          <h2 id="property-title">{property.title}</h2>
           <p className="detail-address">📍 {property.address}</p>
           <p className="detail-location">{property.city}, {property.state}</p>
           

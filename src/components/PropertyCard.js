@@ -2,8 +2,22 @@ import React from 'react';
 import './PropertyCard.css';
 
 function PropertyCard({ property, onClick }) {
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick(property);
+    }
+  };
+
   return (
-    <div className="property-card" onClick={() => onClick(property)}>
+    <div 
+      className="property-card" 
+      onClick={() => onClick(property)}
+      onKeyPress={handleKeyPress}
+      tabIndex="0"
+      role="button"
+      aria-label={`View details for ${property.title}`}
+    >
       <img src={property.image} alt={property.title} className="property-image" />
       <div className="property-info">
         <div className="property-type-badge">
