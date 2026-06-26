@@ -6,6 +6,10 @@ import { GroupChat, type GroupIncoming } from '../engine/groupChat';
 import type { Identity } from '../engine/identity';
 import { ChatBubble } from './ChatBubble';
 import { Composer } from './Composer';
+import { encodeCreateGroupCall } from '@teleblock/shared';
+
+const B32 = (s: string) => ('0x' + s.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64)) as `0x${string}`;
+const PALETTE = ['#e17076', '#7bc862', '#a695e7', '#ee7aae', '#6ec9cb', '#faa774'];
 
 const LIVE_GROUP_ID = '1';
 
@@ -16,13 +20,34 @@ const nowTime = () => {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function GroupsView({ store, identity }: { store: any; identity: Identity }) {
-  const groups = useMemo(() => store.listGroups(), [store]);
+  const me = identity.address.toLowerCase();
+  const [version, setVersion] = useState(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const groups = useMemo(() => store.listGroups(), [store, version]);
   const [activeId, setActiveId] = useState<string>(groups[0]?.id ?? '');
   const [tab, setTab] = useState<'chat' | 'members'>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState('');
+  const [extraMeta, setExtraMeta] = useState<Record<string, { name: string; color: string }>>({});
+  const [lastTx, setLastTx] = useState('');
   const engine = useRef<GroupChat | null>(null);
-  const meta = (id: string) => GROUP_META[id] ?? { name: `Group ${id}`, color: '#6d7f8f' };
-  const members = useMemo(() => (activeId ? store.groupMembers(activeId) : []), [store, activeId]);
+  const meta = (id: string) => extraMeta[id] ?? GROUP_META[id] ?? { name: `Group ${id}`, color: '#6d7f8f' };
+
+  const createGroup = () => {
+    const name = draft.trim();
+    if (!name) return;
+    const id = String(Math.max(0, ...[...store.groups.keys()].map(Number)) + 1);
+    const cid = B32(id + name);
+    store.apply({ name: 'GroupCreated', args: { groupId: id, owner: me, visibility: 0, metadataCID: cid }, blockNumber: 1e9, logIndex: Date.now() });
+    setExtraMeta((m) => ({ ...m, [id]: { name, color: PALETTE[Number(id) % PALETTE.length] } }));
+    setLastTx(`createGroup → ${encodeCreateGroupCall({ metadataCID: cid, visibility: 0, gate: undefined, mlsGroupId: cid }).slice(0, 18)}…`);
+    setDraft('');
+    setVersion((v) => v + 1);
+    setActiveId(id);
+    setTab('members');
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const members = useMemo(() => (activeId ? store.groupMembers(activeId) : []), [store, activeId, version]);
 
   // Boot the live group-chat engine once (group '1').
   useEffect(() => {
@@ -58,8 +83,9 @@ export function GroupsView({ store, identity }: { store: any; identity: Identity
   return (
     <>
       <div className="list">
-        <div className="search" style={{ color: 'var(--tg-text-secondary)', fontSize: 13, padding: 14 }}>
-          Smart-contract-managed groups
+        <div className="composer" style={{ borderTop: 'none', borderBottom: '1px solid var(--tg-divider)' }}>
+          <input placeholder="Create a group…" value={draft} data-testid="new-group-input" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') createGroup(); }} />
+          <button className="send" onClick={createGroup} disabled={!draft.trim()} data-testid="create-group">＋</button>
         </div>
         <div className="rows" data-testid="groups-list">
           {groups.map((g: any) => {
@@ -98,6 +124,7 @@ export function GroupsView({ store, identity }: { store: any; identity: Identity
                 <div className="title">{meta(activeId).name}</div>
                 <div className="sub">{members.length} members · E2EE via Sender Keys</div>
               </div>
+              {lastTx && <div className="sub" data-testid="group-tx" style={{ marginLeft: 10, fontFamily: 'ui-monospace, monospace', fontSize: 11 }}>{lastTx}</div>}
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                 {(['chat', 'members'] as const).map((t) => (
                   <button
