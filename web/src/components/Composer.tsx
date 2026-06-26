@@ -10,11 +10,13 @@ const TTL_OPTIONS = [
 export function Composer({
   onSend,
   onSendFile,
+  onVoice,
   replyTo,
   onCancelReply,
 }: {
   onSend: (text: string, ttl: number) => void;
   onSendFile: (file: File, ttl: number) => void;
+  onVoice?: (ttl: number) => void;
   replyTo?: { author: string; preview: string } | null;
   onCancelReply?: () => void;
 }) {
@@ -100,9 +102,15 @@ export function Composer({
           }
         }}
       />
-      <button className="send" onClick={submit} disabled={!text.trim()} aria-label="Send">
-        ➤
-      </button>
+      {text.trim() ? (
+        <button className="send" onClick={submit} aria-label="Send">
+          ➤
+        </button>
+      ) : (
+        <button className="send" data-testid="voice" title="Record a voice message" onClick={() => onVoice?.(ttl)} aria-label="Record voice message">
+          🎤
+        </button>
+      )}
     </div>
     </div>
   );

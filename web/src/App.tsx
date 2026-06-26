@@ -17,6 +17,7 @@ import { ProfileView } from './components/ProfileView';
 import { CHATS, initials, type Chat, type Message, type Section } from './data';
 import { SecretChat, type IncomingMessage } from './engine/secretChat';
 import { buildReadModel, DYNAMIC_POST_META } from './engine/indexerData';
+import { makeWavTone } from './engine/audio';
 import { encodeCreatePostCall } from '@teleblock/shared';
 import type { Identity } from './engine/identity';
 import './theme.css';
@@ -143,6 +144,21 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
     } else {
       setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 300);
       setTimeout(() => updateStatus(active.id, msg.id, 'read'), 1100);
+    }
+  };
+
+  // Voice message: synthesize a short clip (no mic in headless), then run it through the SAME
+  // encrypted media path as any attachment and render a playable voice bubble.
+  const sendVoice = async (ttl = 0) => {
+    if (!active) return;
+    const bytes = makeWavTone();
+    if (active.id === LIVE_CHAT_ID && engine.current) {
+      const { media, bytes: back } = await engine.current.sendMedia(bytes, { mime: 'audio/wav', name: 'voice.wav' }, '', ttl || undefined);
+      const url = URL.createObjectURL(new Blob([back], { type: media.mime }));
+      appendMessage(active.id, withExpiry({ id: `voice-${Date.now()}`, text: '', outgoing: true, time: nowTime(), status: 'read', encrypted: true, mediaUrl: url, mediaMime: 'audio/wav', ttl: ttl || undefined }));
+    } else {
+      const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'audio/wav' }));
+      appendMessage(active.id, withExpiry({ id: `voice-${Date.now()}`, text: '', outgoing: true, time: nowTime(), status: 'read', encrypted: true, mediaUrl: url, mediaMime: 'audio/wav', ttl: ttl || undefined }));
     }
   };
 
@@ -317,6 +333,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                     reactions={m.reactions}
                     replyTo={m.replyTo}
                     mediaUrl={m.mediaUrl}
+                    mediaMime={m.mediaMime}
                     ttl={m.ttl}
                     onReact={() => toggleReaction(active.id, m.id)}
                     onReply={() =>
@@ -353,7 +370,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                 </div>
               )}
 
-              <Composer onSend={send} onSendFile={sendFile} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+              <Composer onSend={send} onSendFile={sendFile} onVoice={sendVoice} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
             </section>
           ) : (
             <section className="convo">

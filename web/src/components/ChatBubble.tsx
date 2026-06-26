@@ -17,6 +17,7 @@ export interface ChatBubbleProps {
   replyTo?: { author: string; preview: string };
   encrypted?: boolean;
   mediaUrl?: string;
+  mediaMime?: string;
   ttl?: number;
   onSwipeReply?: () => void;
   onReact?: () => void;
@@ -45,12 +46,14 @@ export function ChatBubble({
   replyTo,
   encrypted,
   mediaUrl,
+  mediaMime,
   ttl,
   onSwipeReply,
   onReact,
   onReply,
   onCrosspost,
 }: ChatBubbleProps) {
+  const isVoice = !!mediaUrl && (mediaMime?.startsWith('audio/') ?? false);
   const startX = useRef(0);
   return (
     <div
@@ -118,7 +121,14 @@ export function ChatBubble({
             <div style={{ opacity: 0.8 }}>{replyTo.preview}</div>
           </div>
         )}
-        {mediaUrl && (
+        {mediaUrl && isVoice && (
+          <div data-testid="voice-message" style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 180 }}>
+            <span style={{ fontSize: 18 }}>🎤</span>
+            {/* Native controls keep this simple + accessible; a custom waveform can replace it. */}
+            <audio data-testid="voice-audio" src={mediaUrl} controls style={{ height: 32, maxWidth: 200 }} />
+          </div>
+        )}
+        {mediaUrl && !isVoice && (
           <img
             src={mediaUrl}
             alt={text || 'image'}
