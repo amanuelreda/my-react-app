@@ -31,6 +31,8 @@ only commitments (hashes), rights, and governance — never message content.
   (inverted index + TF/title-boost + prefix typeahead) and an HTTP read API. **16 tests.**
 - **[`subgraph/`](./subgraph)** — The Graph subgraph (schema + manifest + AssemblyScript mappings)
   indexing all four contracts.
+- **[`infra/`](./infra)** — self-hostable backend: `docker-compose` for a Waku relay, IPFS, the
+  indexer, Postgres, and Meilisearch, so you can run your own TeleBlock infrastructure.
 - **[`docs/`](./docs)** — [`THREAT_MODEL.md`](./docs/THREAT_MODEL.md) and architecture ADRs.
 
 ### Status — Phase 0 (Foundations) ✅ complete · Phase 1 (MVP) in progress

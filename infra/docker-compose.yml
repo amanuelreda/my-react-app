@@ -1,0 +1,84 @@
+# TeleBlock self-hostable stack. Apache-2.0
+# Brings up the off-chain infrastructure so anyone can run their own TeleBlock backend:
+#   - a Waku relay/store node (decentralized real-time transport)
+#   - an IPFS (Kubo) node + gateway (encrypted media/blob storage)
+#   - the custom indexer read API (group rosters, forum rankings, search)
+#   - Postgres (indexer persistence) and Meilisearch (full-text search)
+#
+# The app and contracts are decentralized; this stack is optional community/self-host infra. Point
+# the client at your own relay/gateway/indexer in Settings → Network.
+#
+# Usage:  docker compose -f infra/docker-compose.yml up -d
+services:
+  waku:
+    image: wakuorg/nwaku:latest
+    restart: unless-stopped
+    command:
+      - --relay=true
+      - --store=true
+      - --rest=true
+      - --rest-address=0.0.0.0
+      - --filter=true
+      - --lightpush=true
+    ports:
+      - "8645:8645"   # REST API
+      - "60000:60000" # libp2p
+      - "9000:9000/udp"
+
+  ipfs:
+    image: ipfs/kubo:latest
+    restart: unless-stopped
+    volumes:
+      - ipfs_data:/data/ipfs
+    ports:
+      - "4001:4001"   # swarm
+      - "5001:5001"   # API (keep private in production)
+      - "8080:8080"   # gateway
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: teleblock
+      POSTGRES_PASSWORD: teleblock
+      POSTGRES_DB: indexer
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-devkey-change-me}
+    volumes:
+      - meili_data:/meili_data
+    ports:
+      - "7700:7700"
+
+  indexer:
+    build:
+      context: ..
+      dockerfile: infra/indexer.Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "8090"
+      RPC_URL: ${RPC_URL:-}
+      IDENTITY_REGISTRY_ADDRESS: ${IDENTITY_REGISTRY_ADDRESS:-}
+      GROUP_MANAGER_ADDRESS: ${GROUP_MANAGER_ADDRESS:-}
+      FORUM_MANAGER_ADDRESS: ${FORUM_MANAGER_ADDRESS:-}
+      REPUTATION_ADDRESS: ${REPUTATION_ADDRESS:-}
+      START_BLOCK: ${START_BLOCK:-0}
+      DATABASE_URL: postgres://teleblock:teleblock@postgres:5432/indexer
+      MEILI_URL: http://meilisearch:7700
+    depends_on:
+      - postgres
+      - meilisearch
+    ports:
+      - "8090:8090"
+
+volumes:
+  ipfs_data:
+  pg_data:
+  meili_data:
