@@ -1,0 +1,32 @@
+name: teleblock
+description: TeleBlock — decentralized, end-to-end-encrypted chat, groups & forums (Flutter client).
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # E2EE / keys
+  cryptography: ^2.7.0        # X25519, Ed25519, AES-GCM, ChaCha20-Poly1305
+  # Wallet / SIWE
+  web3dart: ^2.7.3
+  walletconnect_flutter_v2: ^0.9.0
+  # Storage / transport (IPFS gateway + relay over websockets)
+  http: ^1.2.0
+  web_socket_channel: ^3.0.0
+  # State + local DB (offline-first)
+  flutter_riverpod: ^2.5.0
+  drift: ^2.18.0
+  # Secure key storage
+  flutter_secure_storage: ^9.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
