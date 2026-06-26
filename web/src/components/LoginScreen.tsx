@@ -57,42 +57,56 @@ export function LoginScreen({ onAuthed }: { onAuthed: (id: Identity) => void }) 
           <div>· No phone number, no email</div>
           <div>· Your keys never leave this device</div>
         </div>
-        <button
-          onClick={startWallet}
-          disabled={!!busy || !hasWallet}
-          data-testid="connect-wallet"
-          title={hasWallet ? 'Sign in with your wallet (SIWE)' : 'No wallet detected'}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            borderRadius: 10,
-            background: 'var(--tg-accent)',
-            color: '#fff',
-            fontSize: 16,
-            fontWeight: 600,
-            opacity: busy === 'wallet' ? 0.6 : !hasWallet ? 0.45 : 1,
-          }}
-        >
-          {busy === 'wallet' ? 'Check your wallet…' : 'Connect a wallet'}
-        </button>
+        {/* Primary: create account (sign up) — no wallet needed */}
         <button
           onClick={start}
           disabled={!!busy}
           data-testid="create-identity"
           style={{
             width: '100%',
-            padding: '12px 16px',
+            padding: '13px 16px',
             borderRadius: 10,
-            marginTop: 10,
-            background: 'var(--tg-bg-panel)',
-            color: 'var(--tg-text)',
-            fontSize: 15,
+            background: 'var(--tg-accent)',
+            color: '#fff',
+            fontSize: 16,
+            fontWeight: 600,
             opacity: busy === 'burner' ? 0.6 : 1,
           }}
         >
-          {busy === 'burner' ? 'Creating your keys…' : 'Create an identity (no wallet)'}
+          {busy === 'burner' ? 'Creating your keys…' : 'Create account'}
         </button>
-        {error && <div style={{ color: 'var(--tg-danger)', marginTop: 12 }}>{error}</div>}
+        <div style={{ color: 'var(--tg-hint)', fontSize: 13, margin: '6px 0' }}>free · no phone number, no email</div>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 0 12px', color: 'var(--tg-hint)', fontSize: 12 }}>
+          <span style={{ flex: 1, height: 1, background: 'var(--tg-divider)' }} />
+          OR
+          <span style={{ flex: 1, height: 1, background: 'var(--tg-divider)' }} />
+        </div>
+
+        {/* Secondary: connect an existing wallet (SIWE) */}
+        <button
+          onClick={startWallet}
+          disabled={!!busy || !hasWallet}
+          data-testid="connect-wallet"
+          title={hasWallet ? 'Sign in with your wallet (SIWE)' : 'No wallet detected — install MetaMask or similar'}
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            borderRadius: 10,
+            background: 'var(--tg-bg-panel)',
+            color: 'var(--tg-text)',
+            fontSize: 15,
+            fontWeight: 600,
+            border: '1px solid var(--tg-divider)',
+            opacity: busy === 'wallet' ? 0.6 : !hasWallet ? 0.45 : 1,
+          }}
+        >
+          {busy === 'wallet' ? 'Check your wallet…' : '👛 Connect wallet'}
+        </button>
+        {!hasWallet && <div data-testid="no-wallet-hint" style={{ color: 'var(--tg-hint)', fontSize: 12, marginTop: 6 }}>No wallet detected in this browser</div>}
+
+        {error && <div data-testid="login-error" style={{ color: 'var(--tg-danger)', marginTop: 12 }}>{error}</div>}
       </div>
     </div>
   );
