@@ -22,9 +22,10 @@ only commitments (hashes), rights, and governance — never message content.
   group session, in-memory relay + Waku adapter, content-addressed storage + IPFS adapter) with a
   **passing 36-test suite**.
 - **[`web/`](./web)** — Telegram-style web client (Vite + React + TS) wired to the **real** crypto
-  and indexer: burner-identity login, a **live X3DH→ratchet→AEAD 1:1 chat** with an encryption
-  inspector, and Groups/Forums/Discover views rendering **real indexer-derived state** (rosters,
-  reputation-weighted thread ranking, nested replies). **Verified in Chromium** (5 Playwright tests).
+  and indexer: wallet (SIWE) / burner login, a **live X3DH→ratchet→AEAD 1:1 chat** with an
+  encryption inspector, **encrypted media attachments** and **self-destruct timers**, and
+  Groups/Forums/Discover/search rendering **real indexer-derived state**. **Verified in Chromium**
+  (12 Playwright tests).
 - **[`indexer/`](./indexer)** — off-chain indexer: a pure event reducer turning the contract log
   into group rosters, forum rankings, reputation, and identities, plus a full-text **search** index
   (inverted index + TF/title-boost + prefix typeahead) and an HTTP read API. **16 tests.**
@@ -44,7 +45,8 @@ only commitments (hashes), rights, and governance — never message content.
 | Web client wired to live E2EE (browser-verified) | ✅ `cd web && npm run e2e` (Playwright) |
 | Off-chain indexer (reducer + API) + subgraph | ✅ `cd indexer && npm test` → 8 passing |
 | Groups/Forums/Discover + search wired to indexer (browser-verified) | ✅ `cd web && npm run e2e` |
-| Wallet (SIWE) login + register() encoding (browser-verified) | ✅ 10 Playwright tests |
+| Wallet (SIWE) login + register() encoding (browser-verified) | ✅ Playwright |
+| Encrypted media attachments + self-destruct (browser-verified) | ✅ 12 Playwright tests |
 | MLS group crypto · live testnet data | ⏳ Phase 1/2 next |
 
 ```bash

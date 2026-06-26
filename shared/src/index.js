@@ -34,3 +34,10 @@ export {
   getDecrypted,
 } from './storage/store.js';
 export { createGroupSession, GroupSession } from './group/groupSession.js';
+export {
+  attachMedia,
+  loadMedia,
+  encodePayload,
+  decodePayload,
+  isExpired,
+} from './media.js';

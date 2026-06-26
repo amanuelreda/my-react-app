@@ -35,6 +35,10 @@ const nowTime = () => {
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 };
 
+// Stamp a self-destruct deadline onto a message if it carries a ttl.
+const withExpiry = (m: Message): Message =>
+  m.ttl ? { ...m, expiresAt: Date.now() + m.ttl * 1000 } : m;
+
 export default function App() {
   const [identity, setIdentity] = useState<Identity | null>(null);
   if (!identity) return <LoginScreen onAuthed={setIdentity} />;
@@ -58,18 +62,37 @@ function Shell({ identity }: { identity: Identity }) {
     engine.current = sc;
     sc.init((m: IncomingMessage) => {
       if (cancelled) return;
-      appendMessage(LIVE_CHAT_ID, {
+      appendMessage(LIVE_CHAT_ID, withExpiry({
         id: `peer-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         text: m.text,
         outgoing: false,
         time: nowTime(),
         encrypted: true,
-      });
+        ttl: m.ttl,
+      }));
     });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Self-destruct sweep: drop messages whose timer has elapsed, releasing any media object URLs.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const now = Date.now();
+      setChats((prev) =>
+        prev.map((c) => {
+          const kept = c.messages.filter((m) => {
+            const dead = m.expiresAt != null && m.expiresAt <= now;
+            if (dead && m.mediaUrl) URL.revokeObjectURL(m.mediaUrl);
+            return !dead;
+          });
+          return kept.length === c.messages.length ? c : { ...c, messages: kept };
+        }),
+      );
+    }, 1000);
+    return () => clearInterval(id);
   }, []);
 
   // Read model derived from on-chain events via the real indexer reducer (in-browser).
@@ -78,26 +101,61 @@ function Shell({ identity }: { identity: Identity }) {
   const active = chats.find((c) => c.id === activeId) ?? null;
   const isLive = active?.id === LIVE_CHAT_ID;
 
-  const send = (text: string) => {
+  const send = (text: string, ttl = 0) => {
     if (!active) return;
-    const msg: Message = {
+    const msg = withExpiry({
       id: `local-${Date.now()}`,
       text,
       outgoing: true,
       time: nowTime(),
       status: 'sent',
       encrypted: true,
-    };
+      ttl: ttl || undefined,
+    });
     appendMessage(active.id, msg);
 
     if (active.id === LIVE_CHAT_ID && engine.current) {
       // Real path: encrypt+sign+publish over the relay; peer decrypts and replies.
-      engine.current.send(text);
+      engine.current.send(text, ttl || undefined);
       setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 200);
       setTimeout(() => updateStatus(active.id, msg.id, 'read'), 800);
     } else {
       setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 300);
       setTimeout(() => updateStatus(active.id, msg.id, 'read'), 1100);
+    }
+  };
+
+  // Attach an image: encrypt → store (IPFS stand-in) → send a media frame → render the decrypted-back
+  // bytes locally (proving the encrypt→store→decrypt roundtrip ran in the browser).
+  const sendFile = async (file: File, ttl = 0) => {
+    if (!active) return;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (active.id === LIVE_CHAT_ID && engine.current) {
+      const { media, bytes: back } = await engine.current.sendMedia(bytes, { mime: file.type, name: file.name }, '', ttl || undefined);
+      const url = URL.createObjectURL(new Blob([back], { type: media.mime }));
+      appendMessage(active.id, withExpiry({
+        id: `local-${Date.now()}`,
+        text: '',
+        outgoing: true,
+        time: nowTime(),
+        status: 'read',
+        encrypted: true,
+        mediaUrl: url,
+        mediaMime: media.mime,
+        ttl: ttl || undefined,
+      }));
+    } else {
+      const url = URL.createObjectURL(new Blob([bytes], { type: file.type }));
+      appendMessage(active.id, withExpiry({
+        id: `local-${Date.now()}`,
+        text: '',
+        outgoing: true,
+        time: nowTime(),
+        status: 'read',
+        encrypted: true,
+        mediaUrl: url,
+        ttl: ttl || undefined,
+      }));
     }
   };
 
@@ -168,6 +226,8 @@ function Shell({ identity }: { identity: Identity }) {
                     encrypted={m.encrypted}
                     reactions={m.reactions}
                     replyTo={m.replyTo}
+                    mediaUrl={m.mediaUrl}
+                    ttl={m.ttl}
                   />
                 ))}
               </div>
@@ -195,7 +255,7 @@ function Shell({ identity }: { identity: Identity }) {
                 </div>
               )}
 
-              <Composer onSend={send} />
+              <Composer onSend={send} onSendFile={sendFile} />
             </section>
           ) : (
             <section className="convo">

@@ -12,6 +12,10 @@ export interface Message {
   encrypted?: boolean;
   reactions?: { emoji: string; count: number }[];
   replyTo?: { author: string; preview: string };
+  mediaUrl?: string; // object URL of a decrypted image/blob
+  mediaMime?: string;
+  ttl?: number; // self-destruct seconds
+  expiresAt?: number; // epoch ms when this message self-destructs
 }
 
 export interface Chat {

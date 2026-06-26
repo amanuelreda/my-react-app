@@ -16,6 +16,8 @@ export interface ChatBubbleProps {
   reactions?: Reaction[];
   replyTo?: { author: string; preview: string };
   encrypted?: boolean;
+  mediaUrl?: string;
+  ttl?: number;
   onSwipeReply?: () => void;
 }
 
@@ -39,6 +41,8 @@ export function ChatBubble({
   reactions = [],
   replyTo,
   encrypted,
+  mediaUrl,
+  ttl,
   onSwipeReply,
 }: ChatBubbleProps) {
   const startX = useRef(0);
@@ -80,8 +84,17 @@ export function ChatBubble({
             <div style={{ opacity: 0.8 }}>{replyTo.preview}</div>
           </div>
         )}
-        <span>{text}</span>
+        {mediaUrl && (
+          <img
+            src={mediaUrl}
+            alt={text || 'image'}
+            data-testid="bubble-image"
+            style={{ display: 'block', maxWidth: 240, maxHeight: 240, borderRadius: 10, marginBottom: text ? 4 : 0 }}
+          />
+        )}
+        {text && <span>{text}</span>}
         <span style={{ float: 'right', margin: '6px 0 0 8px', fontSize: 12, opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+          {ttl ? <span title={`self-destructs in ${ttl}s`}>🔥</span> : null}
           {encrypted && <span title="End-to-end encrypted">🔒</span>}
           <span style={{ color: 'var(--tg-hint)' }}>{time}</span>
           {outgoing && <Ticks status={status} />}
