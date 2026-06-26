@@ -27,6 +27,16 @@ forge install foundry-rs/forge-std
 forge install OpenZeppelin/openzeppelin-contracts
 ```
 
+## Quick compile check (no Foundry)
+
+A Foundry-independent solc compile gate runs anywhere npm runs:
+
+```bash
+npm install && npm run compile   # solc 0.8.24 → all src/ contracts, 0 errors/warnings
+```
+
+This is a fast sanity check; `forge build`/`forge test` below remain the full pipeline.
+
 ## Build, test, deploy
 
 ```bash

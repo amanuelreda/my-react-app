@@ -54,6 +54,20 @@ jobs:
         working-directory: web
         run: npm run e2e
 
+  contracts-compile:
+    name: contracts (solc compile check)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run compile
+
   contracts:
     name: contracts (forge)
     runs-on: ubuntu-latest

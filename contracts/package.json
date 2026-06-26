@@ -1,0 +1,14 @@
+{
+  "name": "@teleblock/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TeleBlock smart contracts (Foundry) + a Foundry-independent solc compile check",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "compile": "node scripts/compile.js"
+  },
+  "devDependencies": {
+    "solc": "0.8.24"
+  }
+}

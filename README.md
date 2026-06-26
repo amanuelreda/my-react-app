@@ -42,7 +42,8 @@ only commitments (hashes), rights, and governance — never message content.
 | Component | State |
 |---|---|
 | Monorepo, CI, license, contributing, threat model | ✅ |
-| Core contracts + Foundry tests (`contracts/`) | ✅ (run with `forge test`) |
+| Core contracts compile (solc, no Foundry) | ✅ `cd contracts && npm install && npm run compile` (0 errors/warnings) |
+| Core contracts + Foundry unit/fuzz tests | ✅ in CI (`forge test`) |
 | Crypto + identity + group + transport + storage (`shared/`) | ✅ `cd shared && npm install && npm test` → 36 passing |
 | 1:1 (X3DH→ratchet→AEAD) + group (Sender Keys) sessions | ✅ in `shared/` |
 | Telegram-style web UI shell (`web/`) | ✅ `npm --workspace @teleblock/web run build` |

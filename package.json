@@ -12,6 +12,7 @@
   "scripts": {
     "test:shared": "npm --workspace @teleblock/shared test",
     "test:indexer": "npm --workspace @teleblock/indexer test",
+    "compile:contracts": "cd contracts && npm install && npm run compile",
     "test:contracts": "cd contracts && forge test -vvv",
     "test:web": "npm --workspace @teleblock/web run e2e",
     "test": "npm run test:shared && npm run test:indexer",
