@@ -16,6 +16,7 @@ import { DiscoverView } from './components/DiscoverView';
 import { ProfileView } from './components/ProfileView';
 import { CHATS, initials, type Chat, type Message, type Section } from './data';
 import { SecretChat, type IncomingMessage } from './engine/secretChat';
+import { LiveRoom, type RoomMessage } from './engine/liveRoom';
 import { buildReadModel, DYNAMIC_POST_META } from './engine/indexerData';
 import { makeWavTone } from './engine/audio';
 import { encodeCreatePostCall } from '@teleblock/shared';
@@ -31,6 +32,15 @@ const NAV: { key: Section; icon: string; label: string }[] = [
 ];
 
 const LIVE_CHAT_ID = 'dm-nadia';
+const LOBBY_ID = 'lobby';
+
+const LOBBY_CHAT: Chat = {
+  id: LOBBY_ID,
+  name: '🛰️ Lobby (cross-tab)',
+  kind: 'dm',
+  color: '#5eb5f7',
+  messages: [],
+};
 
 const nowTime = () => {
   const d = new Date();
@@ -58,8 +68,10 @@ export default function App() {
 
 function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme; setTheme: (t: Theme) => void }) {
   const [section, setSection] = useState<Section>('chats');
-  const [chats, setChats] = useState<Chat[]>(CHATS);
+  const [chats, setChats] = useState<Chat[]>([LOBBY_CHAT, ...CHATS]);
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
+  const [lobbyPeer, setLobbyPeer] = useState<string | null>(null);
+  const room = useRef<LiveRoom | null>(null);
   const [showInspector, setShowInspector] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
   const [replyTo, setReplyTo] = useState<{ author: string; preview: string } | null>(null);
@@ -94,6 +106,27 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
     );
     return () => {
       cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cross-tab live room: discover another tab, X3DH, and exchange real E2EE messages.
+  useEffect(() => {
+    let cancelled = false;
+    const r = new LiveRoom(identity);
+    room.current = r;
+    r.start(
+      (m: RoomMessage) => {
+        if (cancelled) return;
+        appendMessage(LOBBY_ID, { id: `room-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text: m.text, outgoing: false, time: nowTime(), encrypted: true });
+      },
+      (addr: string | null) => {
+        if (!cancelled) setLobbyPeer(addr);
+      },
+    );
+    return () => {
+      cancelled = true;
+      r.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -137,7 +170,11 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
     appendMessage(active.id, msg);
     setReplyTo(null);
 
-    if (active.id === LIVE_CHAT_ID && engine.current) {
+    if (active.id === LOBBY_ID && room.current) {
+      // Real cross-tab E2EE: encrypt+sign+publish to the other tab over BroadcastChannel.
+      room.current.send(text);
+      setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 200);
+    } else if (active.id === LIVE_CHAT_ID && engine.current) {
       // Real path: encrypt+sign+publish over the relay; peer decrypts and replies.
       engine.current.send(text, ttl || undefined);
       setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 200);
@@ -358,6 +395,13 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
               {banner && (
                 <div data-testid="crosspost-banner" style={{ background: 'var(--tg-bg-active)', color: '#fff', padding: '6px 14px', fontSize: 13 }}>
                   {banner}
+                </div>
+              )}
+              {active.id === LOBBY_ID && (
+                <div data-testid="lobby-status" style={{ background: lobbyPeer ? 'var(--tg-online)' : 'var(--tg-bg-panel)', color: lobbyPeer ? '#06320f' : 'var(--tg-text-secondary)', padding: '6px 14px', fontSize: 13 }}>
+                  {lobbyPeer
+                    ? `🟢 Connected to ${lobbyPeer.slice(0, 8)}… — messages are end-to-end encrypted between tabs`
+                    : 'Open this app in a second tab/window and log in to connect (real E2EE over BroadcastChannel).'}
                 </div>
               )}
               {(() => {
