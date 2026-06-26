@@ -63,6 +63,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
   const [peerTyping, setPeerTyping] = useState(false);
   const [replyTo, setReplyTo] = useState<{ author: string; preview: string } | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [chatSearch, setChatSearch] = useState<string | null>(null);
   const engine = useRef<SecretChat | null>(null);
 
   const appendMessage = (chatId: string, msg: Message) =>
@@ -264,6 +265,14 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                   </div>
                 </div>
                 <button
+                  onClick={() => setChatSearch((s) => (s === null ? '' : null))}
+                  title="Search this chat"
+                  data-testid="toggle-chat-search"
+                  style={{ marginLeft: 'auto', color: 'var(--tg-text-secondary)', fontSize: 16, padding: '0 8px' }}
+                >
+                  🔍
+                </button>
+                <button
                   className="lock"
                   onClick={() => setShowInspector((s) => !s)}
                   title="Show the ciphertext that crossed the wire"
@@ -273,13 +282,31 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                 </button>
               </header>
 
+              {chatSearch !== null && (
+                <div style={{ padding: '6px 12px', background: 'var(--tg-bg-panel)', borderBottom: '1px solid var(--tg-divider)', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    autoFocus
+                    data-testid="chat-search-input"
+                    placeholder="Search in chat"
+                    value={chatSearch}
+                    onChange={(e) => setChatSearch(e.target.value)}
+                    style={{ flex: 1, padding: '7px 12px', borderRadius: 16, border: 'none', background: 'var(--tg-bg)', color: 'var(--tg-text)', outline: 'none' }}
+                  />
+                  <span data-testid="chat-search-count" style={{ color: 'var(--tg-hint)', fontSize: 13 }}>
+                    {chatSearch.trim() ? `${active.messages.filter((m) => m.text.toLowerCase().includes(chatSearch.toLowerCase())).length} found` : ''}
+                  </span>
+                </div>
+              )}
+
               {banner && (
                 <div data-testid="crosspost-banner" style={{ background: 'var(--tg-bg-active)', color: '#fff', padding: '6px 14px', fontSize: 13 }}>
                   {banner}
                 </div>
               )}
               <div className="scroll" data-testid="messages">
-                {active.messages.map((m) => (
+                {active.messages
+                  .filter((m) => !chatSearch?.trim() || m.text.toLowerCase().includes(chatSearch.toLowerCase()))
+                  .map((m) => (
                   <ChatBubble
                     key={m.id}
                     text={m.text}
