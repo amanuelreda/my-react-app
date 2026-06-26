@@ -52,7 +52,7 @@ only commitments (hashes), rights, and governance — never message content.
 | Live group chat (Sender Keys E2EE, browser-verified) | ✅ Playwright |
 | Typing indicators + reactions + reply-quote (browser-verified) | ✅ Playwright |
 | Interactive forums: voting + posting (browser-verified) | ✅ Playwright |
-| Settings: theme switch (Dark/Light/AMOLED) + privacy toggles | ✅ 21 Playwright tests |
+| Settings: theme, privacy, network switcher, data export | ✅ 24 Playwright tests |
 | CI runs the web e2e suite | ✅ `.github/workflows/ci.yml` |
 | MLS group crypto · voice messages · live testnet data | ⏳ Phase 1/2 next |
 

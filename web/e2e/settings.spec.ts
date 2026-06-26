@@ -33,3 +33,22 @@ test('privacy toggles flip state', async ({ page }) => {
   await receipts.click();
   await expect(receipts).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('network switcher and data export', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('create-identity').click();
+  await page.locator('.rail button[title="Profile"]').click();
+
+  // Network switcher.
+  const net = page.getByTestId('network-select');
+  await expect(net).toHaveValue('base-sepolia');
+  await net.selectOption('base');
+  await expect(net).toHaveValue('base');
+
+  // Data export downloads a JSON file.
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByTestId('export-data').click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('teleblock-export.json');
+});

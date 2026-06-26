@@ -21,6 +21,27 @@ export function ProfileView({
 }) {
   const [readReceipts, setReadReceipts] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
+  const [network, setNetwork] = useState('base-sepolia');
+
+  const exportData = () => {
+    // Public, non-secret export. Private keys would go in a separately passphrase-encrypted archive.
+    const data = {
+      version: 1,
+      exportedFrom: 'TeleBlock',
+      address: identity.address,
+      signingKeyFingerprint: fingerprint(identity.signing.publicKey),
+      settings: { theme, network, readReceipts, showOnline },
+      note: 'Private keys are NOT included here; export them via the encrypted key backup.',
+    };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'teleblock-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
 
   const row = (label: string, value: string, testid?: string) => (
     <div className="row" style={{ borderRadius: 10 }}>
@@ -106,6 +127,27 @@ export function ProfileView({
           <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Privacy</div>
           {toggle('Send read receipts', readReceipts, setReadReceipts, 'toggle-receipts')}
           {toggle('Show online status', showOnline, setShowOnline, 'toggle-online')}
+
+          <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Network</div>
+          <div className="row" style={{ borderRadius: 10 }}>
+            <div className="meta"><div className="name">Blockchain network</div></div>
+            <select
+              data-testid="network-select"
+              value={network}
+              onChange={(e) => setNetwork(e.target.value)}
+              style={{ background: 'var(--tg-bg-hover)', color: 'var(--tg-text)', border: 'none', borderRadius: 8, padding: '6px 10px', fontSize: 13 }}
+            >
+              <option value="base-sepolia">Base Sepolia (testnet)</option>
+              <option value="base">Base</option>
+              <option value="arbitrum">Arbitrum</option>
+            </select>
+          </div>
+
+          <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Data</div>
+          <div className="row" style={{ borderRadius: 10 }}>
+            <div className="meta"><div className="name">Export my data</div><div className="preview">profile + settings (keys excluded)</div></div>
+            <button data-testid="export-data" onClick={exportData} style={{ color: 'var(--tg-accent)', fontWeight: 600, fontSize: 14, padding: '6px 10px' }}>Export</button>
+          </div>
         </div>
       </section>
     </>
