@@ -30,6 +30,7 @@ export function GroupsView({ store, identity }: { store: any; identity: Identity
   const [draft, setDraft] = useState('');
   const [extraMeta, setExtraMeta] = useState<Record<string, { name: string; color: string }>>({});
   const [lastTx, setLastTx] = useState('');
+  const [commit, setCommit] = useState('');
   const engine = useRef<GroupChat | null>(null);
   const meta = (id: string) => extraMeta[id] ?? GROUP_META[id] ?? { name: `Group ${id}`, color: '#6d7f8f' };
 
@@ -54,13 +55,18 @@ export function GroupsView({ store, identity }: { store: any; identity: Identity
     let cancelled = false;
     const gc = new GroupChat(identity, LIVE_GROUP_ID);
     engine.current = gc;
-    gc.init((m: GroupIncoming) => {
-      if (cancelled) return;
-      setMessages((prev) => [
-        ...prev,
-        { id: `g-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text: `${m.senderName}: ${m.text}`, outgoing: false, time: nowTime(), encrypted: true },
-      ]);
-    });
+    gc.init(
+      (m: GroupIncoming) => {
+        if (cancelled) return;
+        setMessages((prev) => [
+          ...prev,
+          { id: `g-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text: `${m.senderName}: ${m.text}`, outgoing: false, time: nowTime(), encrypted: true },
+        ]);
+      },
+      (rootHex: string) => {
+        if (!cancelled) setCommit(rootHex);
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -160,6 +166,11 @@ export function GroupsView({ store, identity }: { store: any; identity: Identity
               </div>
             ) : isLive ? (
               <>
+                {commit && (
+                  <div data-testid="anchor" style={{ background: '#0b1118', color: 'var(--tg-text-secondary)', padding: '5px 14px', fontSize: 11, fontFamily: 'ui-monospace, monospace' }}>
+                    ⛓️ anchored batch · appendCommitment({commit})
+                  </div>
+                )}
                 <div className="scroll" data-testid="group-messages">
                   {messages.length === 0 && <div className="empty">Send a message — it's E2EE to all members</div>}
                   {messages.map((m) => (

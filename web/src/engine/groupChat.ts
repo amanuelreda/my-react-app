@@ -14,6 +14,9 @@ import {
   deriveIdentityKey,
   encodePayload,
   decodePayload,
+  getSodium,
+  frameHash,
+  buildMerkleRoot,
 } from '@teleblock/shared';
 import type { Identity } from './identity';
 
@@ -37,6 +40,9 @@ export class GroupChat {
   private topic = '';
   private queue: Promise<void> = Promise.resolve();
   private onMessage: (m: GroupIncoming) => void = () => {};
+  private onCommit: (rootHex: string) => void = () => {};
+  private leaves: Uint8Array[] = [];
+  private static BATCH = 2; // anchor a Merkle root every N messages
 
   constructor(identity: Identity, groupId: string) {
     this.groupId = groupId;
@@ -45,8 +51,9 @@ export class GroupChat {
   }
   private identity: Identity;
 
-  async init(onMessage: (m: GroupIncoming) => void) {
+  async init(onMessage: (m: GroupIncoming) => void, onCommit?: (rootHex: string) => void) {
     this.onMessage = onMessage;
+    if (onCommit) this.onCommit = onCommit;
     this.topic = await deriveTopic(`group:${this.groupId}`);
 
     this.me = await createGroupSession({
@@ -107,10 +114,18 @@ export class GroupChat {
     await this.relay.publish(this.topic, m);
   }
 
-  /** Encrypt+publish a group message from the local user. */
+  /** Encrypt+publish a group message from the local user, batching frames for Merkle anchoring. */
   async send(text: string) {
     const m = await this.me.encrypt(encodePayload({ t: 'text', body: text }));
     await this.relay.publish(this.topic, m);
+
+    // Accumulate the frame's hash; every BATCH messages, compute + "anchor" a Merkle root.
+    this.leaves.push(await frameHash(m.frame));
+    if (this.leaves.length % GroupChat.BATCH === 0) {
+      const sodium = await getSodium();
+      const root = await buildMerkleRoot(this.leaves);
+      this.onCommit('0x' + sodium.to_hex(root).slice(0, 16) + '…');
+    }
   }
 }
 
