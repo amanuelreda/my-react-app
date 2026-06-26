@@ -734,10 +734,14 @@ class ChatBubble extends StatelessWidget {
 ## 10. Roadmap
 
 ### Phase 0 — Foundations (weeks 0–6)
-- Monorepo scaffold, CI, license, contribution guide, threat model doc.
-- `IdentityRegistry` contract + SIWE login + key derivation.
-- Crypto core (Double Ratchet 1:1, libsodium utils) with test vectors.
-- Relay PoC (Waku) + IPFS pinning PoC.
+- [x] Monorepo scaffold, CI, license (Apache-2.0), contribution guide, threat model doc.
+- [x] `IdentityRegistry` contract (+ `GroupManager`, `ForumManager`, `Reputation`, `IGate`) with Foundry unit/fuzz tests.
+- [x] Crypto core (libsodium AEAD + Ed25519 frames, symmetric ratchet, wallet→identity key derivation) — **11 tests green** in `shared/`.
+- [ ] SIWE login wiring + key publication flow (client).
+- [ ] Relay PoC (Waku) + IPFS pinning PoC.
+
+> Implemented so far in this repo: `contracts/` (4 contracts + gate adapter + tests + deploy script)
+> and `shared/` (verified crypto core). See `contracts/README.md` and `shared/`.
 
 ### Phase 1 — MVP: solid 1:1 + basic groups (weeks 6–16)
 - 1:1 E2EE chat: text, media (IPFS), voice, read receipts, typing, self-destruct.

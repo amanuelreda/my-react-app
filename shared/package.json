@@ -1,0 +1,15 @@
+{
+  "name": "@teleblock/shared",
+  "version": "0.1.0",
+  "description": "TeleBlock shared protocol types and cryptography core",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test",
+    "lint": "node --check src/crypto/message.js"
+  },
+  "dependencies": {
+    "libsodium-wrappers": "^0.7.13"
+  }
+}
