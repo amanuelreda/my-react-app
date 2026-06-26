@@ -19,6 +19,12 @@ export {
   provisionIdentity,
   buildRegistrationPayload,
 } from './identity/siwe.js';
+export {
+  IDENTITY_REGISTRY_ABI,
+  encodeRegisterCall,
+  encodeRotateKeysCall,
+  encodeClaimUsernameCall,
+} from './identity/registry.js';
 export { deriveTopic, deriveConversationTopic, InMemoryRelay } from './transport/relay.js';
 export { Conversation } from './transport/conversation.js';
 export {

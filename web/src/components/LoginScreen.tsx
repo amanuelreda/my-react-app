@@ -1,20 +1,39 @@
 // TeleBlock login gate — wallet / burner onboarding. Apache-2.0
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createBurnerIdentity, fingerprint, type Identity } from '../engine/identity';
+import { connectWallet, walletSignIn } from '../engine/wallet';
 
 export function LoginScreen({ onAuthed }: { onAuthed: (id: Identity) => void }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<null | 'burner' | 'wallet'>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasWallet, setHasWallet] = useState(false);
+
+  useEffect(() => {
+    setHasWallet(typeof window !== 'undefined' && (!!window.ethereum || !!window.__TB_TEST_PK__));
+  }, []);
 
   const start = async () => {
-    setBusy(true);
+    setBusy('burner');
     setError(null);
     try {
       const id = await createBurnerIdentity();
       onAuthed(id);
     } catch (e) {
       setError((e as Error).message);
-      setBusy(false);
+      setBusy(null);
+    }
+  };
+
+  const startWallet = async () => {
+    setBusy('wallet');
+    setError(null);
+    try {
+      const connector = await connectWallet();
+      const session = await walletSignIn(connector);
+      onAuthed(session.identity);
+    } catch (e) {
+      setError((e as Error).message);
+      setBusy(null);
     }
   };
 
@@ -39,9 +58,10 @@ export function LoginScreen({ onAuthed }: { onAuthed: (id: Identity) => void }) 
           <div>· Your keys never leave this device</div>
         </div>
         <button
-          onClick={start}
-          disabled={busy}
-          data-testid="create-identity"
+          onClick={startWallet}
+          disabled={!!busy || !hasWallet}
+          data-testid="connect-wallet"
+          title={hasWallet ? 'Sign in with your wallet (SIWE)' : 'No wallet detected'}
           style={{
             width: '100%',
             padding: '12px 16px',
@@ -50,25 +70,27 @@ export function LoginScreen({ onAuthed }: { onAuthed: (id: Identity) => void }) 
             color: '#fff',
             fontSize: 16,
             fontWeight: 600,
-            opacity: busy ? 0.6 : 1,
+            opacity: busy === 'wallet' ? 0.6 : !hasWallet ? 0.45 : 1,
           }}
         >
-          {busy ? 'Creating your keys…' : 'Create an identity'}
+          {busy === 'wallet' ? 'Check your wallet…' : 'Connect a wallet'}
         </button>
         <button
-          disabled
-          title="Wallet login (WalletConnect / SIWE) — Phase 1 integration"
+          onClick={start}
+          disabled={!!busy}
+          data-testid="create-identity"
           style={{
             width: '100%',
             padding: '12px 16px',
             borderRadius: 10,
             marginTop: 10,
             background: 'var(--tg-bg-panel)',
-            color: 'var(--tg-text-secondary)',
+            color: 'var(--tg-text)',
             fontSize: 15,
+            opacity: busy === 'burner' ? 0.6 : 1,
           }}
         >
-          Connect a wallet (coming soon)
+          {busy === 'burner' ? 'Creating your keys…' : 'Create an identity (no wallet)'}
         </button>
         {error && <div style={{ color: 'var(--tg-danger)', marginTop: 12 }}>{error}</div>}
       </div>

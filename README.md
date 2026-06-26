@@ -43,8 +43,9 @@ only commitments (hashes), rights, and governance — never message content.
 | Telegram-style web UI shell (`web/`) | ✅ `npm --workspace @teleblock/web run build` |
 | Web client wired to live E2EE (browser-verified) | ✅ `cd web && npm run e2e` (Playwright) |
 | Off-chain indexer (reducer + API) + subgraph | ✅ `cd indexer && npm test` → 8 passing |
-| Groups/Forums/Discover + search wired to indexer (browser-verified) | ✅ `cd web && npm run e2e` (8 tests) |
-| Full wallet login · MLS · live testnet data | ⏳ Phase 1/2 next |
+| Groups/Forums/Discover + search wired to indexer (browser-verified) | ✅ `cd web && npm run e2e` |
+| Wallet (SIWE) login + register() encoding (browser-verified) | ✅ 10 Playwright tests |
+| MLS group crypto · live testnet data | ⏳ Phase 1/2 next |
 
 ```bash
 # verify the protocol core locally (crypto, SIWE, X3DH, group sessions, relay, storage)

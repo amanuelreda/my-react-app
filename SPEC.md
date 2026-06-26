@@ -751,7 +751,8 @@ class ChatBubble extends StatelessWidget {
 - [ ] 1:1 chat UX polish: media (IPFS), voice, typing, self-destruct timers.
 - [x] `GroupManager` v1 contract: create group, roles/permissions, invite/gating, ban + MLS-epoch hook.
 - [x] Wire the web shell to live `@teleblock/shared`: burner identity provisioning + a real X3DH→ratchet→AEAD 1:1 conversation over the relay, **verified running in Chromium via Playwright** (`web/e2e/`).
-- [ ] Full wallet login (WalletConnect/SIWE) + on-chain `IdentityRegistry.register` call.
+- [x] Wallet login (SIWE/EIP-4361): connect an injected/WalletConnect wallet, sign + verify the SIWE message, derive the identity, and build the on-chain `IdentityRegistry.register` calldata (encoder unit-tested; full flow **verified in Chromium** with an injected viem account — `web/e2e/wallet.spec.ts`).
+- [ ] Submit registration against a deployed `IdentityRegistry` on testnet (needs a live chain).
 - [x] The Graph subgraph (schema + manifest + AssemblyScript mappings for all 4 contracts) **and** a custom off-chain indexer (pure event reducer + HTTP read API) — indexer logic **verified** with 8 tests; voting/ranking mirrors `ForumManager.vote()`.
 - [x] Wire client lists to the indexer: Groups (on-chain rosters/roles), Forums (reputation-weighted ranking + nested replies), Discover (top users by reputation) — render real reducer-derived state, **verified in Chromium** (`web/e2e/sections.spec.ts`).
 - [x] Full-text search across groups/forums/posts/people: inverted index + TF/title-boost + prefix typeahead in the indexer (8 tests), wired into the client's Discover search — **verified in Chromium** (`web/e2e/search.spec.ts`). Meilisearch backs the same interface in production.

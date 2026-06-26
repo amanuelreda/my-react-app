@@ -13,9 +13,11 @@ npm run e2e        # Playwright browser test (uses pre-installed Chromium)
 
 ## What's implemented
 
-- **Login gate** (`src/components/LoginScreen.tsx`): provisions a **real identity** — a burner
-  embedded-wallet account signs the fixed identity challenge and derives E2EE keys via
-  `provisionIdentity` (the same path a real wallet/SIWE login uses).
+- **Login gate** (`src/components/LoginScreen.tsx`): two paths, both provisioning a **real identity**.
+  - **Wallet (SIWE)** (`src/engine/wallet.ts`): connect an injected/WalletConnect wallet, sign + verify
+    a SIWE (EIP-4361) message, then derive the messaging key from the fixed identity challenge.
+    `src/engine/registration.ts` builds the on-chain `IdentityRegistry.register` transaction.
+  - **Burner**: an embedded viem account for newcomers — same derivation path, no extension needed.
 - **Live 1:1 E2EE** (`src/engine/secretChat.ts`): the first DM is a *real* end-to-end-encrypted
   conversation — X3DH key agreement, a symmetric ratchet, and AEAD frames over an in-memory relay,
   with a simulated peer that decrypts and replies. An **encryption inspector** shows the actual
