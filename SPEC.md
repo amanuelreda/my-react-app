@@ -750,7 +750,8 @@ class ChatBubble extends StatelessWidget {
 - [x] Telegram-style web UI shell (Vite + React + TS): rail nav, chat list, conversation, `ChatBubble`, composer, read receipts, dark theme — **builds clean** (`web/`).
 - [ ] 1:1 chat UX polish: media (IPFS), voice, typing, self-destruct timers.
 - [x] `GroupManager` v1 contract: create group, roles/permissions, invite/gating, ban + MLS-epoch hook.
-- [ ] Wire the web shell to `@teleblock/shared` (live transport + sessions) and to wallet login.
+- [x] Wire the web shell to live `@teleblock/shared`: burner identity provisioning + a real X3DH→ratchet→AEAD 1:1 conversation over the relay, **verified running in Chromium via Playwright** (`web/e2e/`).
+- [ ] Full wallet login (WalletConnect/SIWE) + on-chain `IdentityRegistry.register` call.
 - [ ] The Graph subgraph + indexer for membership/lists; local search.
 - **Exit criteria:** a 200-member group works smoothly on testnet; external code review of crypto core.
 

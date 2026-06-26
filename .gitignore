@@ -29,3 +29,9 @@ mnemonic.txt
 .DS_Store
 coverage/
 lcov.info
+
+# playwright
+test-results/
+playwright-report/
+.playwright/
+web/e2e/screenshot.png

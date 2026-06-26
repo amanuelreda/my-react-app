@@ -21,8 +21,9 @@ only commitments (hashes), rights, and governance — never message content.
   transport, and storage (libsodium AEAD frames, ratchet, SIWE login, pre-key bundles, Sender-Keys
   group session, in-memory relay + Waku adapter, content-addressed storage + IPFS adapter) with a
   **passing 36-test suite**.
-- **[`web/`](./web)** — Telegram-style web client (Vite + React + TS): rail nav, chat list,
-  conversation, `ChatBubble`, composer, read receipts, dark theme. **Builds clean.**
+- **[`web/`](./web)** — Telegram-style web client (Vite + React + TS) wired to the **real** crypto:
+  burner-identity login and a **live X3DH→ratchet→AEAD 1:1 chat** with an encryption inspector.
+  **Builds clean and is verified running in Chromium** via a Playwright E2E test.
 - **[`docs/`](./docs)** — [`THREAT_MODEL.md`](./docs/THREAT_MODEL.md) and architecture ADRs.
 
 ### Status — Phase 0 (Foundations) ✅ complete · Phase 1 (MVP) in progress
@@ -34,7 +35,8 @@ only commitments (hashes), rights, and governance — never message content.
 | Crypto + identity + group + transport + storage (`shared/`) | ✅ `cd shared && npm install && npm test` → 36 passing |
 | 1:1 (X3DH→ratchet→AEAD) + group (Sender Keys) sessions | ✅ in `shared/` |
 | Telegram-style web UI shell (`web/`) | ✅ `npm --workspace @teleblock/web run build` |
-| Wire UI to live transport · wallet login · MLS · subgraph | ⏳ Phase 1/2 next |
+| Web client wired to live E2EE (browser-verified) | ✅ `cd web && npm run e2e` (Playwright) |
+| Full wallet login · MLS · subgraph/indexer | ⏳ Phase 1/2 next |
 
 ```bash
 # verify the protocol core locally (crypto, SIWE, X3DH, group sessions, relay, storage)

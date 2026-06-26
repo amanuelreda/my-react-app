@@ -17,7 +17,10 @@ async function loadSodium() {
   const isNode =
     typeof process !== 'undefined' && process.versions?.node && typeof window === 'undefined';
   if (isNode) {
-    const { createRequire } = await import('node:module');
+    // Computed specifier + @vite-ignore so browser bundlers don't try to resolve node:module
+    // (this branch never runs in the browser).
+    const nodeModule = 'node:module';
+    const { createRequire } = await import(/* @vite-ignore */ nodeModule);
     const require = createRequire(import.meta.url);
     return require('libsodium-wrappers');
   }

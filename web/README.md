@@ -8,35 +8,39 @@ npm install
 npm run dev       # http://localhost:5173
 npm run build     # tsc --noEmit && vite build  -> dist/
 npm run typecheck
+npm run e2e        # Playwright browser test (uses pre-installed Chromium)
 ```
 
 ## What's implemented
 
+- **Login gate** (`src/components/LoginScreen.tsx`): provisions a **real identity** — a burner
+  embedded-wallet account signs the fixed identity challenge and derives E2EE keys via
+  `provisionIdentity` (the same path a real wallet/SIWE login uses).
+- **Live 1:1 E2EE** (`src/engine/secretChat.ts`): the first DM is a *real* end-to-end-encrypted
+  conversation — X3DH key agreement, a symmetric ratchet, and AEAD frames over an in-memory relay,
+  with a simulated peer that decrypts and replies. An **encryption inspector** shows the actual
+  ciphertext frame on the wire (proving no plaintext leaves the device).
 - **Telegram-fidelity UI shell:** left rail (Chats · Groups · Forums · Discover · Profile), searchable
-  chat list with avatars/unread badges, conversation pane, and a composer with Enter-to-send.
-- **`ChatBubble`** (`src/components/ChatBubble.tsx`): right-aligned accent bubbles for sent / gray for
-  received, ✓/✓✓ read ticks, lock glyph for E2EE, reactions, reply quotes, swipe-to-reply.
-- **Optimistic send** with simulated delivery→read receipt transitions, matching Telegram's feel.
-- Theme tokens in `src/theme.css` mirroring Telegram's dark palette (`--tg-*`).
+  chat list with avatars/unread badges, conversation pane, composer with Enter-to-send.
+- **`ChatBubble`**: accent/gray bubbles, ✓/✓✓ read ticks, lock glyph, reactions, reply quotes,
+  swipe-to-reply. Theme tokens in `src/theme.css` mirror Telegram's dark palette (`--tg-*`).
 
-## Integrating the protocol core
+The remaining chats use local/optimistic state; they share the same component API and swap onto the
+live engine the same way the first DM does.
 
-The shell uses local/optimistic state so it builds and runs standalone. To make it live, wire
-[`@teleblock/shared`](../shared) behind the same component API:
+## Verified in a real browser
 
-```ts
-import { InMemoryRelay, deriveConversationTopic, Conversation } from '@teleblock/shared';
-// or createWakuTransport() in production
-```
+`npm run e2e` builds the bundle, serves it, drives Chromium, and asserts: an identity is provisioned,
+a message sends over the live conversation, the peer's **decrypted** reply appears, and the on-wire
+frame contains `"ciphertext"` but **not** the plaintext. This exercises libsodium + the full crypto
+core compiled for the browser.
 
-- **1:1 chats:** establish a session with X3DH (`initiateSession`/`respondSession`), seed a
-  `Conversation` over a `Transport`, and render incoming `onMessage` frames as `ChatBubble`s.
-- **Groups:** use `GroupSession` (Sender Keys) keyed off `GroupManager` membership events.
-- **Login:** `buildLoginMessage` + `verifyLogin` (SIWE) and `provisionIdentity` for key setup.
+## Browser bundling note
 
-> Browser note: `@teleblock/shared` loads libsodium via a browser-safe path (dynamic import), so it
-> works under Vite without the Node-only `createRequire` shim. Pin/relay nodes are configured in
-> [`../infra`](../infra) (Phase 2).
+libsodium-wrappers ships a broken ESM entry, so `vite.config.ts` aliases the bare specifier to the
+package's working CommonJS build (resolved from `../shared`). `@teleblock/shared` selects a
+browser-safe libsodium loader at runtime (Node uses `createRequire`; the browser uses a dynamic
+import). Production pin/relay nodes are configured in [`../infra`](../infra) (Phase 2).
 
 ## Production target
 

@@ -1,14 +1,18 @@
-// TeleBlock web shell — Telegram-style 3-column layout. Apache-2.0
+// TeleBlock web shell — Telegram-style 3-column layout with LIVE E2EE. Apache-2.0
 //
-// This is the UI shell: navigation rail, chat list, conversation pane, composer — styled to match
-// Telegram. Messages are local/optimistic here; wiring to @teleblock/shared (Conversation over a
-// Transport, GroupSession for groups) happens behind the same component API. See src/data.ts and
-// the integration note in web/README.md.
-import { useMemo, useState } from 'react';
+// The first DM ("Nadia") is a real end-to-end-encrypted conversation powered by @teleblock/shared:
+// X3DH key agreement, a symmetric ratchet, and AEAD frames over an in-memory relay, with a
+// simulated peer that decrypts and replies. The encryption inspector shows the actual ciphertext
+// that crossed the wire. Other chats use local/optimistic state. Login provisions a real identity
+// (burner or, later, wallet) via SIWE-style key derivation.
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChatBubble } from './components/ChatBubble';
 import { ChatList } from './components/ChatList';
 import { Composer } from './components/Composer';
+import { LoginScreen, fingerprint } from './components/LoginScreen';
 import { CHATS, initials, type Chat, type Message, type Section } from './data';
+import { SecretChat, type IncomingMessage } from './engine/secretChat';
+import type { Identity } from './engine/identity';
 import './theme.css';
 
 const NAV: { key: Section; icon: string; label: string }[] = [
@@ -19,23 +23,56 @@ const NAV: { key: Section; icon: string; label: string }[] = [
   { key: 'profile', icon: '👤', label: 'Profile' },
 ];
 
+const LIVE_CHAT_ID = 'dm-nadia';
+
 const nowTime = () => {
   const d = new Date();
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 };
 
 export default function App() {
+  const [identity, setIdentity] = useState<Identity | null>(null);
+  if (!identity) return <LoginScreen onAuthed={setIdentity} />;
+  return <Shell identity={identity} />;
+}
+
+function Shell({ identity }: { identity: Identity }) {
   const [section, setSection] = useState<Section>('chats');
   const [chats, setChats] = useState<Chat[]>(CHATS);
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
+  const [showInspector, setShowInspector] = useState(false);
+  const engine = useRef<SecretChat | null>(null);
 
-  const visible = useMemo(() => {
-    if (section === 'groups') return chats.filter((c) => c.kind === 'group');
-    if (section === 'chats') return chats;
-    return chats; // forums/discover/profile reuse the list area in this shell
-  }, [chats, section]);
+  const appendMessage = (chatId: string, msg: Message) =>
+    setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, messages: [...c.messages, msg] } : c)));
 
+  // Boot the live E2EE engine once an identity exists.
+  useEffect(() => {
+    let cancelled = false;
+    const sc = new SecretChat(identity);
+    engine.current = sc;
+    sc.init((m: IncomingMessage) => {
+      if (cancelled) return;
+      appendMessage(LIVE_CHAT_ID, {
+        id: `peer-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        text: m.text,
+        outgoing: false,
+        time: nowTime(),
+        encrypted: true,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const visible = useMemo(
+    () => (section === 'groups' ? chats.filter((c) => c.kind === 'group') : chats),
+    [chats, section],
+  );
   const active = chats.find((c) => c.id === activeId) ?? null;
+  const isLive = active?.id === LIVE_CHAT_ID;
 
   const send = (text: string) => {
     if (!active) return;
@@ -47,12 +84,17 @@ export default function App() {
       status: 'sent',
       encrypted: true,
     };
-    setChats((prev) =>
-      prev.map((c) => (c.id === active.id ? { ...c, messages: [...c.messages, msg] } : c)),
-    );
-    // Simulate delivery + read receipts (optimistic UX, like Telegram).
-    setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 300);
-    setTimeout(() => updateStatus(active.id, msg.id, 'read'), 1100);
+    appendMessage(active.id, msg);
+
+    if (active.id === LIVE_CHAT_ID && engine.current) {
+      // Real path: encrypt+sign+publish over the relay; peer decrypts and replies.
+      engine.current.send(text);
+      setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 200);
+      setTimeout(() => updateStatus(active.id, msg.id, 'read'), 800);
+    } else {
+      setTimeout(() => updateStatus(active.id, msg.id, 'delivered'), 300);
+      setTimeout(() => updateStatus(active.id, msg.id, 'read'), 1100);
+    }
   };
 
   const updateStatus = (chatId: string, msgId: string, status: Message['status']) =>
@@ -64,28 +106,22 @@ export default function App() {
       ),
     );
 
+  const wire = engine.current?.lastWireFrame;
+
   return (
     <div className="app show-list">
-      {/* left rail */}
       <nav className="rail">
         {NAV.map((n) => (
-          <button
-            key={n.key}
-            className={section === n.key ? 'active' : ''}
-            title={n.label}
-            onClick={() => setSection(n.key)}
-          >
+          <button key={n.key} className={section === n.key ? 'active' : ''} title={n.label} onClick={() => setSection(n.key)}>
             {n.icon}
           </button>
         ))}
         <div className="spacer" />
-        <button title="Settings">⚙️</button>
+        <button title={`You: ${identity.address.slice(0, 6)}… · key ${fingerprint(identity.signing.publicKey)}`}>👤</button>
       </nav>
 
-      {/* chat list */}
       <ChatList chats={visible} activeId={activeId} onSelect={setActiveId} />
 
-      {/* conversation */}
       {active ? (
         <section className="convo">
           <header className="header">
@@ -95,17 +131,20 @@ export default function App() {
             <div>
               <div className="title">{active.name}</div>
               <div className="sub">
-                {active.kind === 'group'
-                  ? `${active.members ?? 0} members`
-                  : active.online
-                    ? 'online'
-                    : 'last seen recently'}
+                {active.kind === 'group' ? `${active.members ?? 0} members` : active.online ? 'online' : 'last seen recently'}
               </div>
             </div>
-            <div className="lock">🔒 end-to-end encrypted</div>
+            <button
+              className="lock"
+              onClick={() => setShowInspector((s) => !s)}
+              title="Show the ciphertext that crossed the wire"
+              data-testid="toggle-inspector"
+            >
+              🔒 {isLive ? 'live E2EE' : 'encrypted'}
+            </button>
           </header>
 
-          <div className="scroll">
+          <div className="scroll" data-testid="messages">
             {active.messages.map((m) => (
               <ChatBubble
                 key={m.id}
@@ -119,6 +158,29 @@ export default function App() {
               />
             ))}
           </div>
+
+          {showInspector && isLive && (
+            <div
+              data-testid="inspector"
+              style={{
+                background: '#0b1118',
+                borderTop: '1px solid var(--tg-divider)',
+                padding: '8px 12px',
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: 11,
+                color: 'var(--tg-text-secondary)',
+                maxHeight: 120,
+                overflow: 'auto',
+              }}
+            >
+              <div style={{ color: 'var(--tg-online)', marginBottom: 4 }}>
+                ↑ last frame on the relay (ciphertext only — no plaintext leaves the device):
+              </div>
+              <div style={{ wordBreak: 'break-all' }}>
+                {wire ? JSON.stringify(wire) : 'send a message to inspect the encrypted frame'}
+              </div>
+            </div>
+          )}
 
           <Composer onSend={send} />
         </section>
