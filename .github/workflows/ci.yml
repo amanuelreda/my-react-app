@@ -34,6 +34,26 @@ jobs:
       - run: npm install
       - run: npm test
 
+  web:
+    name: web client (build + e2e)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install workspace deps (links shared + indexer)
+        run: npm install
+      - name: Type-check + build
+        working-directory: web
+        run: npm run build
+      - name: Install Playwright Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: E2E (Playwright)
+        working-directory: web
+        run: npm run e2e
+
   contracts:
     name: contracts (forge)
     runs-on: ubuntu-latest

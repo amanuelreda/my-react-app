@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
+import { existsSync } from 'node:fs';
 
-// E2E config. Builds + serves the production bundle, then drives the pre-installed Chromium
-// (no download — PLAYWRIGHT_BROWSERS_PATH points at /opt/pw-browsers).
+// Use the sandbox's pre-installed Chromium when present; otherwise fall back to Playwright's
+// managed browser (e.g. in CI, installed via `npx playwright install --with-deps chromium`).
+const PINNED_CHROMIUM = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const launchOptions = existsSync(PINNED_CHROMIUM) ? { executablePath: PINNED_CHROMIUM } : {};
+
+// E2E config. Builds + serves the production bundle, then drives Chromium.
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -16,9 +21,7 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        launchOptions: {
-          executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-        },
+        launchOptions,
       },
     },
   ],
