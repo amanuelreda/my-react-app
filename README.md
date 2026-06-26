@@ -57,14 +57,21 @@ only commitments (hashes), rights, and governance — never message content.
 | CI runs the web e2e suite | ✅ `.github/workflows/ci.yml` |
 | MLS group crypto · voice messages · live testnet data | ⏳ Phase 1/2 next |
 
+## Testing
+
+**102 automated tests** — 74 Node (crypto/identity/anchor + indexer/search) and 28 Playwright
+(the web client driven in a real Chromium).
+
 ```bash
-# verify the protocol core locally (crypto, SIWE, X3DH, group sessions, relay, storage)
-cd shared && npm install && npm test
+npm install            # links the shared / web / indexer workspaces
+npm run test:all       # shared (56) + indexer (18) + web e2e (28)
 
-# build the Telegram-style web client
-cd web && npm install && npm run build
+# or individually
+npm run test:shared    # crypto, SIWE, X3DH, group sessions, media, anchoring, on-chain encoders
+npm run test:indexer   # event reducer, ranking, search, HTTP API
+npm run test:web       # Playwright: login, live E2EE 1:1 + group chat, media, forums, settings…
 
-# build & test the contracts (requires Foundry: https://book.getfoundry.sh)
+# contracts (requires Foundry: https://book.getfoundry.sh)
 cd contracts && forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts && forge test -vvv
 ```
 
