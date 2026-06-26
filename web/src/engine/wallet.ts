@@ -27,35 +27,83 @@ declare global {
   }
 }
 
-/** Connect a wallet and return a signer. Prefers a test account, then an injected provider. */
-export async function connectWallet(): Promise<Connector> {
-  // Test hook: a deterministic viem account, so the full SIWE + provisioning path runs in CI/E2E
-  // with a real signature but no browser extension.
-  if (typeof window !== 'undefined' && window.__TB_TEST_PK__) {
-    const account = privateKeyToAccount(window.__TB_TEST_PK__);
-    return {
-      address: account.address,
-      kind: 'test',
-      signMessage: (message) => account.signMessage({ message }),
-    };
-  }
+type Eip1193 = { request(args: { method: string; params?: unknown[] }): Promise<unknown> };
 
-  // Real injected wallet (MetaMask / Coinbase / WalletConnect-injected).
-  if (typeof window !== 'undefined' && window.ethereum) {
-    const accounts = (await window.ethereum.request({ method: 'eth_requestAccounts' })) as string[];
-    const address = accounts[0] as `0x${string}`;
-    return {
-      address,
-      kind: 'injected',
-      signMessage: async (message) =>
-        (await window.ethereum!.request({
-          method: 'personal_sign',
-          params: [toHex(message), address],
-        })) as `0x${string}`,
-    };
-  }
+/**
+ * A faithful in-page EIP-1193 provider backed by a viem account — used in CI/E2E (set via
+ * window.__TB_TEST_PK__) so the SAME injected-wallet code path (accounts, chain checks, personal_sign)
+ * runs without a browser extension.
+ */
+function makeTestProvider(pk: `0x${string}`): Eip1193 {
+  const account = privateKeyToAccount(pk);
+  let chainId = '0x14a34'; // 84532 Base Sepolia
+  return {
+    async request({ method, params }) {
+      switch (method) {
+        case 'eth_requestAccounts':
+        case 'eth_accounts':
+          return [account.address];
+        case 'eth_chainId':
+          return chainId;
+        case 'wallet_switchEthereumChain':
+          chainId = (params?.[0] as { chainId: string }).chainId;
+          return null;
+        case 'personal_sign': {
+          const data = (params?.[0] as `0x${string}`); // 0x-hex of the message bytes
+          return account.signMessage({ message: { raw: data } });
+        }
+        default:
+          throw Object.assign(new Error(`unsupported method ${method}`), { code: 4200 });
+      }
+    },
+  };
+}
 
-  throw new Error('No wallet found. Install a wallet or use “Create an identity”.');
+function getProvider(): Eip1193 | null {
+  if (typeof window === 'undefined') return null;
+  if (window.ethereum) return window.ethereum;
+  if (window.__TB_TEST_PK__) return makeTestProvider(window.__TB_TEST_PK__);
+  return null;
+}
+
+/** Best-effort: ensure the wallet is on the target chain (switch if not). Never blocks login. */
+async function ensureChain(provider: Eip1193, chainId: number) {
+  try {
+    const current = (await provider.request({ method: 'eth_chainId' })) as string;
+    if (parseInt(current, 16) === chainId) return;
+    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x' + chainId.toString(16) }] });
+  } catch {
+    /* chain not added (4902) or user declined — proceed; login/signing still works */
+  }
+}
+
+/** Connect a wallet and return a signer. Uses an injected provider, or a viem-backed test provider. */
+export async function connectWallet(opts?: { chainId?: number }): Promise<Connector> {
+  const provider = getProvider();
+  if (!provider) throw new Error('No wallet found. Install a wallet or use “Create an identity”.');
+
+  let accounts: string[];
+  try {
+    accounts = (await provider.request({ method: 'eth_requestAccounts' })) as string[];
+  } catch (e) {
+    if ((e as { code?: number }).code === 4001) throw new Error('Wallet connection was rejected.');
+    throw e;
+  }
+  const address = accounts[0] as `0x${string}`;
+  await ensureChain(provider, opts?.chainId ?? 84532);
+
+  return {
+    address,
+    kind: typeof window !== 'undefined' && window.ethereum ? 'injected' : 'test',
+    signMessage: async (message) => {
+      try {
+        return (await provider.request({ method: 'personal_sign', params: [toHex(message), address] })) as `0x${string}`;
+      } catch (e) {
+        if ((e as { code?: number }).code === 4001) throw new Error('Signature request was rejected.');
+        throw e;
+      }
+    },
+  };
 }
 
 export interface WalletSession {
