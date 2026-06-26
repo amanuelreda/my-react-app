@@ -4,7 +4,11 @@ import { existsSync } from 'node:fs';
 // Use the sandbox's pre-installed Chromium when present; otherwise fall back to Playwright's
 // managed browser (e.g. in CI, installed via `npx playwright install --with-deps chromium`).
 const PINNED_CHROMIUM = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
-const launchOptions = existsSync(PINNED_CHROMIUM) ? { executablePath: PINNED_CHROMIUM } : {};
+// Fake camera/mic so WebRTC getUserMedia works (and is auto-granted) in headless CI.
+const mediaArgs = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'];
+const launchOptions = existsSync(PINNED_CHROMIUM)
+  ? { executablePath: PINNED_CHROMIUM, args: mediaArgs }
+  : { args: mediaArgs };
 
 // E2E config. Builds + serves the production bundle, then drives Chromium.
 export default defineConfig({
