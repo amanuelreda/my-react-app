@@ -25,6 +25,16 @@ export {
   encodeRotateKeysCall,
   encodeClaimUsernameCall,
 } from './identity/registry.js';
+export {
+  GROUP_MANAGER_ABI,
+  FORUM_MANAGER_ABI,
+  encodeCreateGroupCall,
+  encodeJoinGroupCall,
+  encodeBanCall,
+  encodeCreateForumCall,
+  encodeCreatePostCall,
+  encodeVoteCall,
+} from './onchain/contracts.js';
 export { deriveTopic, deriveConversationTopic, InMemoryRelay } from './transport/relay.js';
 export { Conversation } from './transport/conversation.js';
 export {

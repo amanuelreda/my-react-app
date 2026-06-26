@@ -1,42 +1,72 @@
-// Forums section — threads ranked by reputation-weighted score, from the indexer. Apache-2.0
+// Forums section — interactive: reputation-weighted voting + new threads, applied to the in-browser
+// indexer (live re-ranking) and encoded as on-chain ForumManager calldata. Apache-2.0
 import { useMemo, useState } from 'react';
 import { initials } from '../data';
 import { FORUM_META, POST_META, USER_NAME, govLabel } from '../engine/indexerData';
+import type { Identity } from '../engine/identity';
+import { encodeVoteCall, encodeCreatePostCall } from '@teleblock/shared';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export function ForumsView({ store }: { store: any }) {
-  const forums = useMemo(
-    () => [...store.forums.values()].map((f: any) => ({ id: f.id, gov: f.gov, visibility: f.visibility })),
-    [store],
-  );
-  const [forumId, setForumId] = useState<string>(forums[0]?.id ?? '');
+const B32 = (s: string) => ('0x' + s.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64)) as `0x${string}`;
+
+export function ForumsView({ store, identity }: { store: any; identity: Identity }) {
+  const me = identity.address.toLowerCase();
+  const [version, setVersion] = useState(0);
+  const bump = () => setVersion((v) => v + 1);
+  const [forumId, setForumId] = useState<string>([...store.forums.values()][0]?.id ?? '');
   const [sort, setSort] = useState<'top' | 'new'>('top');
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+  const [extraMeta, setExtraMeta] = useState<Record<string, { title: string; preview: string }>>({});
+  const [lastTx, setLastTx] = useState<string>('');
 
-  const threads = useMemo(
-    () => (forumId ? store.forumThreads(forumId, { sort }) : []),
-    [store, forumId, sort],
+  const forums = useMemo(
+    () => [...store.forums.values()].map((f: any) => ({ id: f.id, gov: f.gov })),
+    [store],
   );
-  const replies = useMemo(() => (threadId ? store.replies(threadId) : []), [store, threadId]);
+  const threads = useMemo(
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => (forumId ? store.forumThreads(forumId, { sort }) : []),
+    [store, forumId, sort, version],
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const replies = useMemo(() => (threadId ? store.replies(threadId) : []), [store, threadId, version]);
   const fmeta = (id: string) => FORUM_META[id] ?? { name: `Forum ${id}`, color: '#5eb5f7' };
-  const pmeta = (id: string) => POST_META[id] ?? { title: `Post ${id}`, preview: '' };
+  const pmeta = (id: string) => extraMeta[id] ?? POST_META[id] ?? { title: `Post ${id}`, preview: '' };
+
+  const myVote = (postId: string): number => store.posts.get(postId)?.votes?.get(me) ?? 0;
+
+  const weight = () => Math.max(1, Math.floor(Math.sqrt(store.reputationOf(me))));
+
+  const vote = (postId: string, dir: number) => {
+    const cur = myVote(postId);
+    const next = cur === dir ? 0 : dir; // toggle
+    store.apply({ name: 'Voted', args: { postId, voter: me, dir: next, weight: weight() }, blockNumber: 1e9, logIndex: Date.now() });
+    setLastTx(`vote(${postId}, ${next}) → ${encodeVoteCall(postId, next).slice(0, 18)}…`);
+    bump();
+  };
+
+  const nextPostId = () => String(Math.max(0, ...[...store.posts.keys()].map(Number)) + 1);
+
+  const postThread = () => {
+    const title = draft.trim();
+    if (!title || !forumId) return;
+    const id = nextPostId();
+    const cid = B32(id + forumId);
+    store.apply({ name: 'PostCreated', args: { postId: id, forumId, parentId: '0', author: me, contentCID: cid }, blockNumber: 1e9, logIndex: Date.now() });
+    setExtraMeta((m) => ({ ...m, [id]: { title, preview: 'posted just now' } }));
+    setLastTx(`createPost(${forumId}, 0) → ${encodeCreatePostCall(forumId, 0, cid, cid).slice(0, 18)}…`);
+    setDraft('');
+    bump();
+  };
 
   return (
     <>
       <div className="list">
-        <div className="search" style={{ color: 'var(--tg-text-secondary)', fontSize: 13, padding: 14 }}>
-          Forums
-        </div>
+        <div className="search" style={{ color: 'var(--tg-text-secondary)', fontSize: 13, padding: 14 }}>Forums</div>
         <div className="rows" data-testid="forums-list">
           {forums.map((f: any) => (
-            <div
-              key={f.id}
-              className={`row ${f.id === forumId ? 'active' : ''}`}
-              onClick={() => {
-                setForumId(f.id);
-                setThreadId(null);
-              }}
-            >
+            <div key={f.id} className={`row ${f.id === forumId ? 'active' : ''}`} onClick={() => { setForumId(f.id); setThreadId(null); }}>
               <div className="avatar" style={{ background: fmeta(f.id).color }}>{initials(fmeta(f.id).name)}</div>
               <div className="meta">
                 <div className="top">
@@ -53,50 +83,34 @@ export function ForumsView({ store }: { store: any }) {
       <section className="convo">
         <header className="header">
           <div className="title">{forumId ? fmeta(forumId).name : 'Forums'}</div>
+          {lastTx && <div className="sub" data-testid="last-tx" style={{ marginLeft: 10, fontFamily: 'ui-monospace, monospace', fontSize: 11 }}>{lastTx}</div>}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
             {(['top', 'new'] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSort(s)}
-                data-testid={`sort-${s}`}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 14,
-                  fontSize: 13,
-                  background: sort === s ? 'var(--tg-bg-active)' : 'var(--tg-bg-hover)',
-                  color: '#fff',
-                }}
-              >
+              <button key={s} onClick={() => setSort(s)} data-testid={`sort-${s}`} style={{ padding: '4px 10px', borderRadius: 14, fontSize: 13, background: sort === s ? 'var(--tg-bg-active)' : 'var(--tg-bg-hover)', color: '#fff' }}>
                 {s === 'top' ? 'Hot' : 'New'}
               </button>
             ))}
           </div>
         </header>
 
+        <div className="composer" style={{ borderTop: 'none', borderBottom: '1px solid var(--tg-divider)' }}>
+          <input placeholder="Start a new thread…" value={draft} data-testid="new-thread-input" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') postThread(); }} />
+          <button className="send" onClick={postThread} disabled={!draft.trim()} data-testid="post-thread">＋</button>
+        </div>
+
         <div className="scroll" data-testid="threads" style={{ padding: 10 }}>
           {threads.map((t: any) => (
-            <div
-              key={t.id}
-              className="row"
-              data-testid="thread"
-              data-score={t.score}
-              style={{ borderRadius: 10, alignItems: 'flex-start' }}
-              onClick={() => setThreadId(threadId === t.id ? null : t.id)}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 34 }}>
-                <span style={{ fontSize: 13 }}>▲</span>
+            <div key={t.id} className="row" data-testid="thread" data-score={t.score} style={{ borderRadius: 10, alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 36 }}>
+                <button data-testid="upvote" onClick={() => vote(t.id, 1)} style={{ color: myVote(t.id) === 1 ? 'var(--tg-online)' : 'var(--tg-hint)', fontSize: 14 }}>▲</button>
                 <span style={{ fontWeight: 700, fontSize: 15 }} data-testid="thread-score">{t.score}</span>
+                <button data-testid="downvote" onClick={() => vote(t.id, -1)} style={{ color: myVote(t.id) === -1 ? 'var(--tg-danger)' : 'var(--tg-hint)', fontSize: 14 }}>▼</button>
               </div>
-              <div className="meta">
+              <div className="meta" onClick={() => setThreadId(threadId === t.id ? null : t.id)} style={{ cursor: 'pointer' }}>
                 <div className="top">
-                  <span className="name">
-                    {t.status === 'pinned' ? '📌 ' : ''}
-                    {pmeta(t.id).title}
-                  </span>
+                  <span className="name">{t.status === 'pinned' ? '📌 ' : ''}{pmeta(t.id).title}</span>
                 </div>
-                <div className="preview">
-                  {pmeta(t.id).preview} · {USER_NAME[t.author] ?? t.author} · {store.replies(t.id).length} replies
-                </div>
+                <div className="preview">{pmeta(t.id).preview} · {USER_NAME[t.author] ?? t.author} · {store.replies(t.id).length} replies</div>
                 {threadId === t.id && (
                   <div data-testid="replies" style={{ marginTop: 8, borderLeft: '2px solid var(--tg-divider)', paddingLeft: 10 }}>
                     {replies.map((r: any) => (

@@ -210,7 +210,7 @@ function Shell({ identity }: { identity: Identity }) {
       {section === 'groups' ? (
         <GroupsView store={readModel} identity={identity} />
       ) : section === 'forums' ? (
-        <ForumsView store={readModel} />
+        <ForumsView store={readModel} identity={identity} />
       ) : section === 'discover' ? (
         <DiscoverView store={readModel} />
       ) : section === 'profile' ? (
