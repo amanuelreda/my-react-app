@@ -27,3 +27,4 @@ export {
   putEncrypted,
   getDecrypted,
 } from './storage/store.js';
+export { createGroupSession, GroupSession } from './group/groupSession.js';

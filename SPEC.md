@@ -746,10 +746,11 @@ class ChatBubble extends StatelessWidget {
 
 ### Phase 1 — MVP: solid 1:1 + basic groups (weeks 6–16) — in progress
 - [x] 1:1 E2EE session primitives: X3DH → ratchet → AEAD frames over a Transport (done in `shared/`).
-- [ ] 1:1 chat UX: text, media (IPFS), voice, read receipts, typing, self-destruct.
+- [x] Group E2EE (MVP): **Sender Keys** `GroupSession` — multi-member send/receive, out-of-order handling, and **remove + rotate → removed member loses forward access** (mirrors `GroupManager.ban()`). MLS is the Phase 2 upgrade (O(log n) rekey, stronger PCS) behind the same API.
+- [x] Telegram-style web UI shell (Vite + React + TS): rail nav, chat list, conversation, `ChatBubble`, composer, read receipts, dark theme — **builds clean** (`web/`).
+- [ ] 1:1 chat UX polish: media (IPFS), voice, typing, self-destruct timers.
 - [x] `GroupManager` v1 contract: create group, roles/permissions, invite/gating, ban + MLS-epoch hook.
-- [ ] MLS group integration (OpenMLS/wasm) wired to `GroupManager` membership.
-- [ ] Telegram-style UI: chats list, conversation, composer, profile, dark theme.
+- [ ] Wire the web shell to `@teleblock/shared` (live transport + sessions) and to wallet login.
 - [ ] The Graph subgraph + indexer for membership/lists; local search.
 - **Exit criteria:** a 200-member group works smoothly on testnet; external code review of crypto core.
 

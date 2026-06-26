@@ -9,18 +9,27 @@
 // A frame is the unit published to the transport (Waku) or, for large payloads, a small frame
 // referencing an IPFS CID whose blob is itself an encrypted frame.
 
-// libsodium-wrappers ships a broken ESM path map (its .mjs imports a sibling that isn't bundled),
-// so we load the working CommonJS build via createRequire. Browser bundlers (Vite/webpack) resolve
-// the package's "import"/"browser" field directly and don't hit this path.
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const _sodium = require('libsodium-wrappers');
+// Loading libsodium-wrappers is environment-dependent: under Node its ESM build has a broken
+// internal path map, so we use the CommonJS build via createRequire; under a browser bundler
+// (Vite/webpack) the dynamic import resolves the package's browser/ESM build correctly. The Node
+// branch uses a *dynamic* import of "node:module" so bundlers never try to resolve it for the web.
+async function loadSodium() {
+  const isNode =
+    typeof process !== 'undefined' && process.versions?.node && typeof window === 'undefined';
+  if (isNode) {
+    const { createRequire } = await import('node:module');
+    const require = createRequire(import.meta.url);
+    return require('libsodium-wrappers');
+  }
+  const mod = await import('libsodium-wrappers');
+  return mod.default ?? mod;
+}
 
 let sodiumReady;
 /** Resolve the initialized libsodium instance (idempotent). */
 export async function getSodium() {
   if (!sodiumReady) {
-    sodiumReady = _sodium.ready.then(() => _sodium);
+    sodiumReady = loadSodium().then((s) => s.ready.then(() => s));
   }
   return sodiumReady;
 }

@@ -17,9 +17,12 @@ only commitments (hashes), rights, and governance — never message content.
   model, scalability strategy, starter code, roadmap, deployment & contribution guide.
 - **[`contracts/`](./contracts)** — Foundry Solidity contracts (`IdentityRegistry`, `GroupManager`,
   `ForumManager`, `Reputation`, `IGate` adapters) with unit + fuzz tests and a deploy script.
-- **[`shared/`](./shared)** — the protocol core: cryptography, identity/X3DH, transport, and
-  storage (libsodium AEAD frames, symmetric ratchet, SIWE login, pre-key bundles, an in-memory
-  relay + Waku adapter, content-addressed storage + IPFS adapter) with a **passing 30-test suite**.
+- **[`shared/`](./shared)** — the protocol core: cryptography, identity/X3DH, group sessions,
+  transport, and storage (libsodium AEAD frames, ratchet, SIWE login, pre-key bundles, Sender-Keys
+  group session, in-memory relay + Waku adapter, content-addressed storage + IPFS adapter) with a
+  **passing 36-test suite**.
+- **[`web/`](./web)** — Telegram-style web client (Vite + React + TS): rail nav, chat list,
+  conversation, `ChatBubble`, composer, read receipts, dark theme. **Builds clean.**
 - **[`docs/`](./docs)** — [`THREAT_MODEL.md`](./docs/THREAT_MODEL.md) and architecture ADRs.
 
 ### Status — Phase 0 (Foundations) ✅ complete · Phase 1 (MVP) in progress
@@ -28,13 +31,17 @@ only commitments (hashes), rights, and governance — never message content.
 |---|---|
 | Monorepo, CI, license, contributing, threat model | ✅ |
 | Core contracts + Foundry tests (`contracts/`) | ✅ (run with `forge test`) |
-| Crypto + identity + transport + storage (`shared/`) | ✅ `cd shared && npm install && npm test` → 30 passing |
-| 1:1 session primitives (X3DH → ratchet → AEAD over relay) | ✅ in `shared/` |
-| MLS group integration · client UI · subgraph/indexer | ⏳ Phase 1 next |
+| Crypto + identity + group + transport + storage (`shared/`) | ✅ `cd shared && npm install && npm test` → 36 passing |
+| 1:1 (X3DH→ratchet→AEAD) + group (Sender Keys) sessions | ✅ in `shared/` |
+| Telegram-style web UI shell (`web/`) | ✅ `npm --workspace @teleblock/web run build` |
+| Wire UI to live transport · wallet login · MLS · subgraph | ⏳ Phase 1/2 next |
 
 ```bash
-# verify the protocol core locally (crypto, SIWE, X3DH, relay, storage)
+# verify the protocol core locally (crypto, SIWE, X3DH, group sessions, relay, storage)
 cd shared && npm install && npm test
+
+# build the Telegram-style web client
+cd web && npm install && npm run build
 
 # build & test the contracts (requires Foundry: https://book.getfoundry.sh)
 cd contracts && forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts && forge test -vvv

@@ -5,12 +5,15 @@
   "description": "Decentralized, end-to-end-encrypted chat, groups & forums with a Telegram-grade UX",
   "license": "Apache-2.0",
   "workspaces": [
-    "shared"
+    "shared",
+    "web"
   ],
   "scripts": {
     "test:shared": "npm --workspace @teleblock/shared test",
     "test:contracts": "cd contracts && forge test -vvv",
-    "test": "npm run test:shared"
+    "test": "npm run test:shared",
+    "build:web": "npm --workspace @teleblock/web run build",
+    "dev:web": "npm --workspace @teleblock/web run dev"
   },
   "engines": {
     "node": ">=20"
