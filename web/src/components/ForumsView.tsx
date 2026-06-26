@@ -17,6 +17,7 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
   const [sort, setSort] = useState<'top' | 'new'>('top');
   const [threadId, setThreadId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  const [replyDraft, setReplyDraft] = useState('');
   const [extraMeta, setExtraMeta] = useState<Record<string, { title: string; preview: string }>>({});
   const [lastTx, setLastTx] = useState<string>('');
 
@@ -57,6 +58,18 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
     setExtraMeta((m) => ({ ...m, [id]: { title, preview: 'posted just now' } }));
     setLastTx(`createPost(${forumId}, 0) → ${encodeCreatePostCall(forumId, 0, cid, cid).slice(0, 18)}…`);
     setDraft('');
+    bump();
+  };
+
+  const postReply = (parentId: string) => {
+    const body = replyDraft.trim();
+    if (!body || !forumId) return;
+    const id = nextPostId();
+    const cid = B32(id + parentId);
+    store.apply({ name: 'PostCreated', args: { postId: id, forumId, parentId, author: me, contentCID: cid }, blockNumber: 1e9, logIndex: Date.now() });
+    setExtraMeta((m) => ({ ...m, [id]: { title: body, preview: body } }));
+    setLastTx(`createPost(${forumId}, ${parentId}) → ${encodeCreatePostCall(forumId, parentId, cid, cid).slice(0, 18)}…`);
+    setReplyDraft('');
     bump();
   };
 
@@ -120,6 +133,17 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
                       </div>
                     ))}
                     {replies.length === 0 && <div style={{ color: 'var(--tg-hint)', fontSize: 13 }}>No replies yet</div>}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        placeholder="Reply…"
+                        value={replyDraft}
+                        data-testid="reply-input"
+                        onChange={(e) => setReplyDraft(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') postReply(t.id); }}
+                        style={{ flex: 1, padding: '6px 10px', borderRadius: 14, border: 'none', background: 'var(--tg-bg)', color: 'var(--tg-text)', outline: 'none', fontSize: 13 }}
+                      />
+                      <button data-testid="post-reply" onClick={() => postReply(t.id)} disabled={!replyDraft.trim()} style={{ color: 'var(--tg-accent)', fontWeight: 600, fontSize: 13 }}>Reply</button>
+                    </div>
                   </div>
                 )}
               </div>

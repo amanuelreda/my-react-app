@@ -36,3 +36,22 @@ test('posting a new thread adds it to the forum', async ({ page }) => {
   await expect(page.getByTestId('threads').getByText(title)).toBeVisible();
   await expect(page.getByTestId('last-tx')).toContainText(/createPost\(/);
 });
+
+test('replying inside a thread adds a nested reply', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('create-identity').click();
+  await page.locator('.rail button', { hasText: '🗂️' }).click();
+
+  // Open the thread that already has replies.
+  const row = page.getByTestId('thread').filter({ hasText: 'MLS vs Sender Keys for large' });
+  await row.locator('.meta').click();
+  const replies = page.getByTestId('replies');
+  await expect(replies).toBeVisible();
+
+  const body = `my-reply-${Date.now()}`;
+  await page.getByTestId('reply-input').fill(body);
+  await page.getByTestId('post-reply').click();
+
+  await expect(replies.getByText(body)).toBeVisible();
+  await expect(page.getByTestId('last-tx')).toContainText(/createPost\(1, 10\)/);
+});
