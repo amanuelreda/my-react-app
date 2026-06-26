@@ -51,6 +51,7 @@ function Shell({ identity }: { identity: Identity }) {
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
   const [showInspector, setShowInspector] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ author: string; preview: string } | null>(null);
   const engine = useRef<SecretChat | null>(null);
 
   const appendMessage = (chatId: string, msg: Message) =>
@@ -117,8 +118,10 @@ function Shell({ identity }: { identity: Identity }) {
       status: 'sent',
       encrypted: true,
       ttl: ttl || undefined,
+      replyTo: replyTo ?? undefined,
     });
     appendMessage(active.id, msg);
+    setReplyTo(null);
 
     if (active.id === LIVE_CHAT_ID && engine.current) {
       // Real path: encrypt+sign+publish over the relay; peer decrypts and replies.
@@ -259,6 +262,12 @@ function Shell({ identity }: { identity: Identity }) {
                     mediaUrl={m.mediaUrl}
                     ttl={m.ttl}
                     onReact={() => toggleReaction(active.id, m.id)}
+                    onReply={() =>
+                      setReplyTo({
+                        author: m.outgoing ? 'You' : active.name,
+                        preview: m.text || (m.mediaUrl ? '📷 Photo' : ''),
+                      })
+                    }
                   />
                 ))}
               </div>
@@ -286,7 +295,7 @@ function Shell({ identity }: { identity: Identity }) {
                 </div>
               )}
 
-              <Composer onSend={send} onSendFile={sendFile} />
+              <Composer onSend={send} onSendFile={sendFile} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
             </section>
           ) : (
             <section className="convo">

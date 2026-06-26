@@ -20,6 +20,7 @@ export interface ChatBubbleProps {
   ttl?: number;
   onSwipeReply?: () => void;
   onReact?: () => void;
+  onReply?: () => void;
 }
 
 function Ticks({ status }: { status: Status }) {
@@ -46,6 +47,7 @@ export function ChatBubble({
   ttl,
   onSwipeReply,
   onReact,
+  onReply,
 }: ChatBubbleProps) {
   const startX = useRef(0);
   return (
@@ -53,9 +55,26 @@ export function ChatBubble({
       style={{ display: 'flex', padding: '1px 12px', margin: '1px 0', justifyContent: outgoing ? 'flex-end' : 'flex-start' }}
       onTouchStart={(e) => (startX.current = e.touches[0].clientX)}
       onTouchEnd={(e) => {
-        if (e.changedTouches[0].clientX - startX.current > 56) onSwipeReply?.();
+        if (e.changedTouches[0].clientX - startX.current > 56) (onReply ?? onSwipeReply)?.();
       }}
     >
+      {onReply && (
+        <button
+          data-testid="reply-btn"
+          title="Reply"
+          onClick={onReply}
+          style={{
+            alignSelf: 'center',
+            order: outgoing ? -1 : 1,
+            opacity: 0.5,
+            color: 'var(--tg-text-secondary)',
+            padding: '0 6px',
+            fontSize: 14,
+          }}
+        >
+          ↩
+        </button>
+      )}
       <div
         onDoubleClick={onReact}
         style={{

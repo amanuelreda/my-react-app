@@ -10,9 +10,13 @@ const TTL_OPTIONS = [
 export function Composer({
   onSend,
   onSendFile,
+  replyTo,
+  onCancelReply,
 }: {
   onSend: (text: string, ttl: number) => void;
   onSendFile: (file: File, ttl: number) => void;
+  replyTo?: { author: string; preview: string } | null;
+  onCancelReply?: () => void;
 }) {
   const [text, setText] = useState('');
   const [ttlIdx, setTtlIdx] = useState(0);
@@ -27,6 +31,31 @@ export function Composer({
   };
 
   return (
+    <div>
+    {replyTo && (
+      <div
+        data-testid="reply-preview"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '6px 12px',
+          background: 'var(--tg-bg-panel)',
+          borderTop: '1px solid var(--tg-divider)',
+          borderLeft: '3px solid var(--tg-accent)',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ color: 'var(--tg-accent)', fontWeight: 600, fontSize: 13 }}>Reply to {replyTo.author}</div>
+          <div style={{ color: 'var(--tg-text-secondary)', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {replyTo.preview}
+          </div>
+        </div>
+        <button data-testid="cancel-reply" onClick={onCancelReply} style={{ color: 'var(--tg-hint)', fontSize: 18, padding: '0 4px' }}>
+          ✕
+        </button>
+      </div>
+    )}
     <div className="composer">
       <button
         className="send"
@@ -74,6 +103,7 @@ export function Composer({
       <button className="send" onClick={submit} disabled={!text.trim()} aria-label="Send">
         ➤
       </button>
+    </div>
     </div>
   );
 }

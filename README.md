@@ -48,7 +48,7 @@ only commitments (hashes), rights, and governance — never message content.
 | Wallet (SIWE) login + register() encoding (browser-verified) | ✅ Playwright |
 | Encrypted media attachments + self-destruct (browser-verified) | ✅ Playwright |
 | Live group chat (Sender Keys E2EE, browser-verified) | ✅ Playwright |
-| Typing indicators + reactions (browser-verified) | ✅ 15 Playwright tests |
+| Typing indicators + reactions + reply-quote (browser-verified) | ✅ 17 Playwright tests |
 | MLS group crypto · voice messages · live testnet data | ⏳ Phase 1/2 next |
 
 ```bash
