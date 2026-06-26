@@ -16,7 +16,7 @@ Legend: ✅ implemented & verified · 🟡 scaffold / partial · ⛔ blocked her
 | No server sees plaintext | ✅ | relay/store carry ciphertext only; `transport`/`storage` tests + browser inspector |
 | Wallet/DID login | ✅ | SIWE (`identity/siwe.js`) + `web/engine/wallet.ts`; browser test signs real SIWE |
 | Content on IPFS/Arweave, CIDs/hashes on-chain | ✅ | `storage/*`, `media.js`; encrypt-before-store tests |
-| Smart contracts: identity, groups, forums, reputation | ✅ | `contracts/src/*`; **solc compile 0 errors** + Foundry tests in CI |
+| Smart contracts: identity, groups, forums, reputation | ✅ | `contracts/src/*`; **solc compile 0 errors + executed in an in-process EVM** (`test/behavior.test.js`); Foundry fuzz/invariant in CI |
 | Open source (Apache-2.0) | ✅ | `LICENSE`, every file headered |
 
 ## Must-have features
@@ -63,7 +63,8 @@ Legend: ✅ implemented & verified · 🟡 scaffold / partial · ⛔ blocked her
 
 ## What "blocked here" means
 
-This build environment blocks the Foundry installer and outbound RPC, and has no Flutter SDK, so
-three things can't be executed *in this sandbox*: the full `forge test` run (contracts still **compile**
-via solc and the Foundry tests run in CI), a live testnet deploy, and a Flutter build. Everything
-else is implemented and verified by an automated test that runs here.
+This build environment blocks the Foundry installer and outbound RPC, and has no Flutter SDK. The
+contracts are still **compiled (solc) and executed in an in-process EVM** here — only Foundry's
+fuzz/invariant suite is deferred to CI. A live testnet deploy and a Flutter build also need infra
+absent from this sandbox. Everything else is implemented and verified by an automated test that runs
+here.

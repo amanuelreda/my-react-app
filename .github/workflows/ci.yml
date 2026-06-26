@@ -55,7 +55,7 @@ jobs:
         run: npm run e2e
 
   contracts-compile:
-    name: contracts (solc compile check)
+    name: contracts (solc compile + EVM behavior)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,6 +67,7 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run compile
+      - run: npm run test:evm   # executes the contracts in an in-process EVM (no Foundry)
 
   contracts:
     name: contracts (forge)

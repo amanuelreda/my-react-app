@@ -27,15 +27,18 @@ forge install foundry-rs/forge-std
 forge install OpenZeppelin/openzeppelin-contracts
 ```
 
-## Quick compile check (no Foundry)
-
-A Foundry-independent solc compile gate runs anywhere npm runs:
+## Foundry-independent checks (run anywhere npm runs)
 
 ```bash
-npm install && npm run compile   # solc 0.8.24 → all src/ contracts, 0 errors/warnings
+npm install
+npm run compile    # solc 0.8.24 → all src/ contracts, 0 errors/warnings
+npm run test:evm   # deploys + EXECUTES the contracts in an in-process EVM (@ethereumjs/evm)
 ```
 
-This is a fast sanity check; `forge build`/`forge test` below remain the full pipeline.
+`test:evm` (see `test/behavior.test.js` + `test/evm-harness.js`) runs real on-chain behavior tests —
+register/username-uniqueness, group create→ban→rejoin-blocked, reputation auth + sqrt voting weight,
+and forum signed-voting + DAO-only moderation — without a node or Foundry. `forge build`/`forge test`
+below remain the full pipeline (fuzz/invariant) in CI.
 
 ## Build, test, deploy
 

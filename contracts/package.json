@@ -6,9 +6,13 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "compile": "node scripts/compile.js"
+    "compile": "node scripts/compile.js",
+    "test:evm": "node --test test/behavior.test.js"
   },
   "devDependencies": {
+    "@ethereumjs/common": "^4.4.0",
+    "@ethereumjs/evm": "^3.1.1",
+    "@ethereumjs/util": "^9.1.0",
     "solc": "0.8.24"
   }
 }
