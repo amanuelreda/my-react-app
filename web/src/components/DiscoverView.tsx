@@ -6,7 +6,7 @@ import { GROUP_META, FORUM_META, POST_META, BADGE_META, USER_NAME, govLabel, bui
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TYPE_ICON: Record<string, string> = { group: '👥', forum: '🗂️', post: '💬', user: '👤' };
 
-export function DiscoverView({ store }: { store: any }) {
+export function DiscoverView({ store, onBack }: { store: any; onBack?: () => void }) {
   const search = useMemo(() => buildSearch(store), [store]);
   const [q, setQ] = useState('');
   const results = useMemo(() => (q.trim() ? search.search(q, { limit: 20 }) : []), [search, q]);
@@ -93,6 +93,7 @@ export function DiscoverView({ store }: { store: any }) {
 
       <section className="convo">
         <header className="header">
+          <button className="mobile-only" data-testid="view-back" aria-label="Back" onClick={onBack} style={{ fontSize: 20, color: 'var(--tg-text-secondary)', marginRight: 4 }}>◀</button>
           <div className="title">Recommended people</div>
           <div className="sub" style={{ marginLeft: 8 }}>ranked by on-chain reputation</div>
         </header>

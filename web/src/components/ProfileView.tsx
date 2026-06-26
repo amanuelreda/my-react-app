@@ -16,10 +16,12 @@ export function ProfileView({
   identity,
   theme,
   setTheme,
+  onBack,
 }: {
   identity: Identity;
   theme: Theme;
   setTheme: (t: Theme) => void;
+  onBack?: () => void;
 }) {
   const [readReceipts, setReadReceipts] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
@@ -110,6 +112,7 @@ export function ProfileView({
 
       <section className="convo">
         <header className="header">
+          <button className="mobile-only" data-testid="view-back" aria-label="Back" onClick={onBack} style={{ fontSize: 20, color: 'var(--tg-text-secondary)', marginRight: 4 }}>◀</button>
           <div className="avatar" style={{ width: 40, height: 40, background: 'var(--tg-accent)' }}>ME</div>
           <div>
             <div className="title">Your identity</div>

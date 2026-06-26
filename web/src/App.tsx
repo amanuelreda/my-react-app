@@ -362,13 +362,13 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
       </nav>
 
       {section === 'groups' ? (
-        <GroupsView store={readModel} identity={identity} />
+        <GroupsView store={readModel} identity={identity} onBack={() => setMobileConvo(false)} />
       ) : section === 'forums' ? (
-        <ForumsView store={readModel} identity={identity} />
+        <ForumsView store={readModel} identity={identity} onBack={() => setMobileConvo(false)} />
       ) : section === 'discover' ? (
-        <DiscoverView store={readModel} />
+        <DiscoverView store={readModel} onBack={() => setMobileConvo(false)} />
       ) : section === 'profile' ? (
-        <ProfileView identity={identity} theme={theme} setTheme={setTheme} />
+        <ProfileView identity={identity} theme={theme} setTheme={setTheme} onBack={() => setMobileConvo(false)} />
       ) : (
         <>
           <ChatList chats={chats} activeId={activeId} onSelect={setActiveId} onContacts={() => setContactsOpen(true)} />

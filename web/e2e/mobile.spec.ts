@@ -31,3 +31,19 @@ test('mobile: list↔conversation swap with back + bottom nav', async ({ page })
   await page.getByTestId('mobile-nav').locator('button', { hasText: '🗂️' }).click();
   await expect(page.getByTestId('forums-list')).toBeVisible();
 });
+
+test('mobile: every section detail has a working back button', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('create-identity').click();
+
+  for (const icon of ['👥', '🗂️', '🧭', '👤']) {
+    await page.getByTestId('mobile-nav').locator('button', { hasText: icon }).click();
+    await expect(page.locator('.list')).toBeVisible();
+    // Open the first list item → detail pane, which has a ◀ back button that returns to the list.
+    await page.locator('.list .row').first().click();
+    const back = page.getByTestId('view-back').first();
+    await expect(back).toBeVisible();
+    await back.click();
+    await expect(page.locator('.list')).toBeVisible();
+  }
+});

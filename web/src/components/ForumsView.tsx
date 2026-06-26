@@ -11,7 +11,7 @@ const STATUS = { active: 0, hidden: 1, locked: 2, pinned: 3 } as const;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const B32 = (s: string) => ('0x' + s.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64)) as `0x${string}`;
 
-export function ForumsView({ store, identity }: { store: any; identity: Identity }) {
+export function ForumsView({ store, identity, onBack }: { store: any; identity: Identity; onBack?: () => void }) {
   const me = identity.address.toLowerCase();
   const [version, setVersion] = useState(0);
   const bump = () => setVersion((v) => v + 1);
@@ -109,6 +109,7 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
 
       <section className="convo">
         <header className="header">
+          <button className="mobile-only" data-testid="view-back" aria-label="Back" onClick={onBack} style={{ fontSize: 20, color: 'var(--tg-text-secondary)', marginRight: 4 }}>◀</button>
           <div className="title">{forumId ? fmeta(forumId).name : 'Forums'}</div>
           {lastTx && <div className="sub" data-testid="last-tx" style={{ marginLeft: 10, fontFamily: 'ui-monospace, monospace', fontSize: 11 }}>{lastTx}</div>}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>

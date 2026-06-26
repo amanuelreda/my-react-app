@@ -19,7 +19,7 @@ const nowTime = () => {
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export function GroupsView({ store, identity }: { store: any; identity: Identity }) {
+export function GroupsView({ store, identity, onBack }: { store: any; identity: Identity; onBack?: () => void }) {
   const me = identity.address.toLowerCase();
   const [version, setVersion] = useState(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,6 +123,7 @@ export function GroupsView({ store, identity }: { store: any; identity: Identity
         {activeId ? (
           <>
             <header className="header">
+              <button className="mobile-only" data-testid="view-back" aria-label="Back" onClick={onBack} style={{ fontSize: 20, color: 'var(--tg-text-secondary)', marginRight: 4 }}>◀</button>
               <div className="avatar" style={{ width: 40, height: 40, background: meta(activeId).color }}>
                 {initials(meta(activeId).name)}
               </div>
