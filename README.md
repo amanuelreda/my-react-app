@@ -35,7 +35,8 @@ only commitments (hashes), rights, and governance — never message content.
   indexer, Postgres, and Meilisearch, so you can run your own TeleBlock infrastructure.
 - **[`mobile/`](./mobile)** — Flutter client **scaffold** (app shell + Telegram-styled `ChatBubble`);
   protocol wiring follows the web client's verified semantics. Needs the Flutter SDK to build.
-- **[`docs/`](./docs)** — [`THREAT_MODEL.md`](./docs/THREAT_MODEL.md) and architecture ADRs.
+- **[`docs/`](./docs)** — [`STATUS.md`](./docs/STATUS.md) (spec→code→test traceability matrix),
+  [`THREAT_MODEL.md`](./docs/THREAT_MODEL.md), and architecture ADRs.
 
 ### Status — Phase 0 (Foundations) ✅ complete · Phase 1 (MVP) in progress
 
