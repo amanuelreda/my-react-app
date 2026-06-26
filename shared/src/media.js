@@ -56,12 +56,22 @@ export async function loadMedia(store, descriptor, expectedSignerPub = null) {
 // self-destruct metadata). Encode before sending over a Conversation/GroupSession; decode on receipt.
 
 /**
+ * @typedef {Object} Poll
+ * @property {string} question
+ * @property {{text:string, votes:number}[]} options
+ * @property {boolean} [multi]   allow multiple choices
+ */
+
+/**
  * @typedef {Object} MessagePayload
- * @property {'text'|'media'} t
+ * @property {'text'|'media'|'poll'} t
  * @property {string} [body]               text (or media caption)
  * @property {MediaDescriptor} [media]
+ * @property {Poll} [poll]
  * @property {number} [ttl]                self-destruct seconds (0/undefined = permanent)
  */
+
+const PAYLOAD_TYPES = new Set(['text', 'media', 'poll']);
 
 /** @param {MessagePayload} payload @returns {string} */
 export function encodePayload(payload) {
@@ -72,7 +82,7 @@ export function encodePayload(payload) {
 export function decodePayload(s) {
   try {
     const p = JSON.parse(s);
-    if (p && (p.t === 'text' || p.t === 'media')) return p;
+    if (p && PAYLOAD_TYPES.has(p.t)) return p;
   } catch {
     /* fall through */
   }

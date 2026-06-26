@@ -57,6 +57,14 @@ test('decodePayload treats a bare string as text (back-compat)', () => {
   assert.equal(p.body, 'just text');
 });
 
+test('payload envelope carries a poll', () => {
+  const poll = { question: 'Best L2?', options: [{ text: 'Base', votes: 0 }, { text: 'Arbitrum', votes: 0 }] };
+  const p = decodePayload(encodePayload({ t: 'poll', poll }));
+  assert.equal(p.t, 'poll');
+  assert.equal(p.poll.options.length, 2);
+  assert.equal(p.poll.question, 'Best L2?');
+});
+
 test('isExpired honors the self-destruct ttl', () => {
   const sentAt = 1_000_000;
   assert.equal(isExpired(0, sentAt, sentAt + 999_999), false); // no ttl

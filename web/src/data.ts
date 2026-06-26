@@ -16,6 +16,7 @@ export interface Message {
   mediaMime?: string;
   ttl?: number; // self-destruct seconds
   expiresAt?: number; // epoch ms when this message self-destructs
+  poll?: { question: string; options: { text: string; votes: number }[]; voted?: number };
 }
 
 export interface Chat {

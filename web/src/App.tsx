@@ -219,6 +219,46 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
     setTimeout(() => setBanner(null), 4000);
   };
 
+  // Create a poll (demo question). Polls render locally and are votable; the simulated peer casts a
+  // vote on the live chat.
+  const sendPoll = () => {
+    if (!active) return;
+    const id = `poll-${Date.now()}`;
+    appendMessage(active.id, {
+      id,
+      text: '',
+      outgoing: true,
+      time: nowTime(),
+      status: 'read',
+      encrypted: true,
+      poll: { question: 'Which L2 should we deploy on?', options: [
+        { text: 'Base', votes: 0 },
+        { text: 'Arbitrum', votes: 0 },
+        { text: 'Optimism', votes: 0 },
+      ] },
+    });
+    if (active.id === LIVE_CHAT_ID) {
+      // The peer casts a vote shortly after, demonstrating multi-party tallying.
+      setTimeout(() => pollVote(active.id, id, 0, true), 900);
+    }
+  };
+
+  const pollVote = (chatId: string, msgId: string, optIdx: number, fromPeer = false) =>
+    setChats((prev) =>
+      prev.map((c) => {
+        if (c.id !== chatId) return c;
+        return {
+          ...c,
+          messages: c.messages.map((m) => {
+            if (m.id !== msgId || !m.poll) return m;
+            if (!fromPeer && m.poll.voted != null) return m; // one vote per local user
+            const options = m.poll.options.map((o, i) => (i === optIdx ? { ...o, votes: o.votes + 1 } : o));
+            return { ...m, poll: { ...m.poll, options, voted: fromPeer ? m.poll.voted : optIdx } };
+          }),
+        };
+      }),
+    );
+
   // Double-tap a bubble to toggle a 👍 reaction (Telegram-style quick reaction).
   const toggleReaction = (chatId: string, msgId: string) =>
     setChats((prev) =>
@@ -335,6 +375,8 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                     mediaUrl={m.mediaUrl}
                     mediaMime={m.mediaMime}
                     ttl={m.ttl}
+                    poll={m.poll}
+                    onPollVote={(i) => pollVote(active.id, m.id, i)}
                     onReact={() => toggleReaction(active.id, m.id)}
                     onReply={() =>
                       setReplyTo({
@@ -370,7 +412,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                 </div>
               )}
 
-              <Composer onSend={send} onSendFile={sendFile} onVoice={sendVoice} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+              <Composer onSend={send} onSendFile={sendFile} onVoice={sendVoice} onPoll={sendPoll} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
             </section>
           ) : (
             <section className="convo">

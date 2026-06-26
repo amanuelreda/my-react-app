@@ -11,12 +11,14 @@ export function Composer({
   onSend,
   onSendFile,
   onVoice,
+  onPoll,
   replyTo,
   onCancelReply,
 }: {
   onSend: (text: string, ttl: number) => void;
   onSendFile: (file: File, ttl: number) => void;
   onVoice?: (ttl: number) => void;
+  onPoll?: () => void;
   replyTo?: { author: string; preview: string } | null;
   onCancelReply?: () => void;
 }) {
@@ -77,6 +79,15 @@ export function Composer({
         onClick={() => fileRef.current?.click()}
       >
         📎
+      </button>
+      <button
+        className="send"
+        style={{ background: 'var(--tg-bg-hover)' }}
+        title="Create a poll"
+        data-testid="poll-btn"
+        onClick={() => onPoll?.()}
+      >
+        📊
       </button>
       <input
         ref={fileRef}

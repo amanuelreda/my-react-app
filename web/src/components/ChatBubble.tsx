@@ -1,5 +1,6 @@
 // TeleBlock ChatBubble — Telegram-styled. Apache-2.0
 import { useRef } from 'react';
+import { Poll, type PollData } from './Poll';
 
 export type Status = 'sent' | 'delivered' | 'read';
 
@@ -19,6 +20,8 @@ export interface ChatBubbleProps {
   mediaUrl?: string;
   mediaMime?: string;
   ttl?: number;
+  poll?: PollData;
+  onPollVote?: (i: number) => void;
   onSwipeReply?: () => void;
   onReact?: () => void;
   onReply?: () => void;
@@ -48,6 +51,8 @@ export function ChatBubble({
   mediaUrl,
   mediaMime,
   ttl,
+  poll,
+  onPollVote,
   onSwipeReply,
   onReact,
   onReply,
@@ -136,6 +141,7 @@ export function ChatBubble({
             style={{ display: 'block', maxWidth: 240, maxHeight: 240, borderRadius: 10, marginBottom: text ? 4 : 0 }}
           />
         )}
+        {poll && <Poll poll={poll} onVote={(i) => onPollVote?.(i)} />}
         {text && <span>{text}</span>}
         <span style={{ float: 'right', margin: '6px 0 0 8px', fontSize: 12, opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
           {ttl ? <span title={`self-destructs in ${ttl}s`}>🔥</span> : null}
