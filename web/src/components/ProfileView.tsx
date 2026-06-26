@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { fingerprint } from './LoginScreen';
 import type { Identity } from '../engine/identity';
 import type { Theme } from '../App';
+import { CONTRACTS, LIVE_MODE, NETWORKS } from '../config';
+import { buildRegisterTx, sendRegister } from '../engine/registration';
 
 const THEMES: { key: Theme; label: string }[] = [
   { key: 'dark', label: 'Dark' },
@@ -22,6 +24,18 @@ export function ProfileView({
   const [readReceipts, setReadReceipts] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
   const [network, setNetwork] = useState('base-sepolia');
+  const [publishMsg, setPublishMsg] = useState<string>('');
+
+  const publishOnChain = async () => {
+    try {
+      // In production the pre-key bundle is pinned to IPFS first; use a placeholder CID here.
+      const tx = buildRegisterTx(identity, { contractAddress: CONTRACTS.identityRegistry as `0x${string}`, preKeyBundleCID: 'bafk-prekey', profileCID: '' });
+      const hash = await sendRegister(tx);
+      setPublishMsg(`Submitted: ${hash.slice(0, 14)}…`);
+    } catch (e) {
+      setPublishMsg((e as Error).message);
+    }
+  };
 
   const exportData = () => {
     // Public, non-secret export. Private keys would go in a separately passphrase-encrypted archive.
@@ -141,6 +155,22 @@ export function ProfileView({
               <option value="base">Base</option>
               <option value="arbitrum">Arbitrum</option>
             </select>
+          </div>
+
+          <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>On-chain identity</div>
+          <div className="row" style={{ borderRadius: 10 }}>
+            <div className="meta">
+              <div className="name">Publish to IdentityRegistry</div>
+              <div className="preview" data-testid="onchain-status">
+                {LIVE_MODE
+                  ? `Registry ${(CONTRACTS.identityRegistry as string).slice(0, 10)}… on ${NETWORKS[network]?.name ?? network}`
+                  : 'Demo mode — set VITE_IDENTITY_REGISTRY to publish on-chain (see docs/RUNBOOK.md)'}
+                {publishMsg ? ` · ${publishMsg}` : ''}
+              </div>
+            </div>
+            <button data-testid="publish-onchain" disabled={!LIVE_MODE} onClick={publishOnChain} style={{ color: LIVE_MODE ? 'var(--tg-accent)' : 'var(--tg-hint)', fontWeight: 600, fontSize: 14, padding: '6px 10px' }}>
+              Publish
+            </button>
           </div>
 
           <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Data</div>

@@ -52,3 +52,13 @@ test('network switcher and data export', async ({ page }) => {
   ]);
   expect(download.suggestedFilename()).toBe('teleblock-export.json');
 });
+
+test('on-chain identity section reflects demo mode by default', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('create-identity').click();
+  await page.locator('.rail button[title="Profile"]').click();
+
+  // No VITE_IDENTITY_REGISTRY configured -> demo mode, Publish disabled with a runbook hint.
+  await expect(page.getByTestId('onchain-status')).toContainText(/Demo mode/);
+  await expect(page.getByTestId('publish-onchain')).toBeDisabled();
+});
