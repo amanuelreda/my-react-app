@@ -47,8 +47,9 @@ only commitments (hashes), rights, and governance — never message content.
 | Groups/Forums/Discover + search wired to indexer (browser-verified) | ✅ `cd web && npm run e2e` |
 | Wallet (SIWE) login + register() encoding (browser-verified) | ✅ Playwright |
 | Encrypted media attachments + self-destruct (browser-verified) | ✅ Playwright |
-| Live group chat (Sender Keys E2EE, browser-verified) | ✅ 13 Playwright tests |
-| MLS group crypto · live testnet data | ⏳ Phase 1/2 next |
+| Live group chat (Sender Keys E2EE, browser-verified) | ✅ Playwright |
+| Typing indicators + reactions (browser-verified) | ✅ 15 Playwright tests |
+| MLS group crypto · voice messages · live testnet data | ⏳ Phase 1/2 next |
 
 ```bash
 # verify the protocol core locally (crypto, SIWE, X3DH, group sessions, relay, storage)

@@ -19,6 +19,7 @@ export interface ChatBubbleProps {
   mediaUrl?: string;
   ttl?: number;
   onSwipeReply?: () => void;
+  onReact?: () => void;
 }
 
 function Ticks({ status }: { status: Status }) {
@@ -44,6 +45,7 @@ export function ChatBubble({
   mediaUrl,
   ttl,
   onSwipeReply,
+  onReact,
 }: ChatBubbleProps) {
   const startX = useRef(0);
   return (
@@ -55,6 +57,7 @@ export function ChatBubble({
       }}
     >
       <div
+        onDoubleClick={onReact}
         style={{
           maxWidth: '76%',
           padding: '6px 9px 5px',

@@ -50,6 +50,7 @@ function Shell({ identity }: { identity: Identity }) {
   const [chats, setChats] = useState<Chat[]>(CHATS);
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
   const [showInspector, setShowInspector] = useState(false);
+  const [peerTyping, setPeerTyping] = useState(false);
   const engine = useRef<SecretChat | null>(null);
 
   const appendMessage = (chatId: string, msg: Message) =>
@@ -60,17 +61,22 @@ function Shell({ identity }: { identity: Identity }) {
     let cancelled = false;
     const sc = new SecretChat(identity);
     engine.current = sc;
-    sc.init((m: IncomingMessage) => {
-      if (cancelled) return;
-      appendMessage(LIVE_CHAT_ID, withExpiry({
-        id: `peer-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        text: m.text,
-        outgoing: false,
-        time: nowTime(),
-        encrypted: true,
-        ttl: m.ttl,
-      }));
-    });
+    sc.init(
+      (m: IncomingMessage) => {
+        if (cancelled) return;
+        appendMessage(LIVE_CHAT_ID, withExpiry({
+          id: `peer-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          text: m.text,
+          outgoing: false,
+          time: nowTime(),
+          encrypted: true,
+          ttl: m.ttl,
+        }));
+      },
+      (typing: boolean) => {
+        if (!cancelled) setPeerTyping(typing);
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -168,6 +174,22 @@ function Shell({ identity }: { identity: Identity }) {
       ),
     );
 
+  // Double-tap a bubble to toggle a 👍 reaction (Telegram-style quick reaction).
+  const toggleReaction = (chatId: string, msgId: string) =>
+    setChats((prev) =>
+      prev.map((c) => {
+        if (c.id !== chatId) return c;
+        return {
+          ...c,
+          messages: c.messages.map((m) => {
+            if (m.id !== msgId) return m;
+            const has = (m.reactions ?? []).some((r) => r.emoji === '👍');
+            return { ...m, reactions: has ? [] : [{ emoji: '👍', count: 1 }] };
+          }),
+        };
+      }),
+    );
+
   const wire = engine.current?.lastWireFrame;
 
   return (
@@ -201,8 +223,16 @@ function Shell({ identity }: { identity: Identity }) {
                 </div>
                 <div>
                   <div className="title">{active.name}</div>
-                  <div className="sub">
-                    {active.kind === 'group' ? `${active.members ?? 0} members` : active.online ? 'online' : 'last seen recently'}
+                  <div className="sub" data-testid="chat-subtitle">
+                    {isLive && peerTyping ? (
+                      <span style={{ color: 'var(--tg-accent)' }}>typing…</span>
+                    ) : active.kind === 'group' ? (
+                      `${active.members ?? 0} members`
+                    ) : active.online ? (
+                      'online'
+                    ) : (
+                      'last seen recently'
+                    )}
                   </div>
                 </div>
                 <button
@@ -228,6 +258,7 @@ function Shell({ identity }: { identity: Identity }) {
                     replyTo={m.replyTo}
                     mediaUrl={m.mediaUrl}
                     ttl={m.ttl}
+                    onReact={() => toggleReaction(active.id, m.id)}
                   />
                 ))}
               </div>

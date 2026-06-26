@@ -56,6 +56,7 @@ export class SecretChat {
   private myConvo!: any;
   private peerConvo!: any;
   private onMessage: (m: IncomingMessage) => void = () => {};
+  private onTyping: (typing: boolean) => void = () => {};
   /** The most recent ciphertext frame seen on the wire (for the encryption inspector). */
   lastWireFrame: Record<string, unknown> | null = null;
 
@@ -64,8 +65,9 @@ export class SecretChat {
   }
 
   /** Establish the session: peer identity, X3DH, directional roots, both Conversations. */
-  async init(onMessage: (m: IncomingMessage) => void) {
+  async init(onMessage: (m: IncomingMessage) => void, onTyping?: (typing: boolean) => void) {
     this.onMessage = onMessage;
+    if (onTyping) this.onTyping = onTyping;
     this.peer = await burner();
     const sodium = await getSodium();
 
@@ -117,13 +119,15 @@ export class SecretChat {
       const p = decodePayload(m.text);
       this.onMessage({ text: p.body ?? '', fromPeer: true, ttl: p.ttl, media: p.media });
     });
-    // The peer decrypts my messages and auto-replies to demonstrate the round-trip.
+    // The peer decrypts my messages and auto-replies — showing a typing indicator first.
     this.peerConvo.start((m: any) => {
       if (m.error) return;
       const p = decodePayload(m.text);
+      this.onTyping(true);
       setTimeout(() => {
+        this.onTyping(false);
         this.peerConvo.send(encodePayload({ t: 'text', body: canReply(p) }));
-      }, 700);
+      }, 900);
     });
   }
 
