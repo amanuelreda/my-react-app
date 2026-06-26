@@ -20,6 +20,9 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
   const [replyDraft, setReplyDraft] = useState('');
   const [extraMeta, setExtraMeta] = useState<Record<string, { title: string; preview: string }>>({});
   const [lastTx, setLastTx] = useState<string>('');
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const COLLAPSE_BELOW = 0; // reputation-gated visibility: negative-score posts start collapsed
+  const reveal = (id: string) => setRevealed((s) => new Set(s).add(id));
 
   const forums = useMemo(
     () => [...store.forums.values()].map((f: any) => ({ id: f.id, gov: f.gov })),
@@ -112,13 +115,23 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
         </div>
 
         <div className="scroll" data-testid="threads" style={{ padding: 10 }}>
-          {threads.map((t: any) => (
+          {threads.map((t: any) => {
+            const collapsed = t.score < COLLAPSE_BELOW && !revealed.has(t.id);
+            return (
             <div key={t.id} className="row" data-testid="thread" data-score={t.score} style={{ borderRadius: 10, alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 36 }}>
                 <button data-testid="upvote" onClick={() => vote(t.id, 1)} style={{ color: myVote(t.id) === 1 ? 'var(--tg-online)' : 'var(--tg-hint)', fontSize: 14 }}>▲</button>
                 <span style={{ fontWeight: 700, fontSize: 15 }} data-testid="thread-score">{t.score}</span>
                 <button data-testid="downvote" onClick={() => vote(t.id, -1)} style={{ color: myVote(t.id) === -1 ? 'var(--tg-danger)' : 'var(--tg-hint)', fontSize: 14 }}>▼</button>
               </div>
+              {collapsed ? (
+                <div className="meta" data-testid="collapsed">
+                  <div className="preview" style={{ fontStyle: 'italic' }}>
+                    Low-reputation post hidden (score {t.score}) ·{' '}
+                    <button data-testid="show-collapsed" onClick={() => reveal(t.id)} style={{ color: 'var(--tg-accent)' }}>show</button>
+                  </div>
+                </div>
+              ) : (
               <div className="meta" onClick={() => setThreadId(threadId === t.id ? null : t.id)} style={{ cursor: 'pointer' }}>
                 <div className="top">
                   <span className="name">{t.status === 'pinned' ? '📌 ' : ''}{pmeta(t.id).title}</span>
@@ -147,8 +160,10 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
                   </div>
                 )}
               </div>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </>

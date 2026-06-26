@@ -818,7 +818,7 @@ teleblock/
 
 ## 12. Innovative Ideas
 
-1. **Reputation-gated forum visibility.** Low-rep/sybil posts start collapsed and gain visibility as quadratic-weighted votes accrue — spam is invisible-by-default without a central censor.
+1. **Reputation-gated forum visibility.** Low-rep/sybil posts start collapsed and gain visibility as quadratic-weighted votes accrue — spam is invisible-by-default without a central censor. *Implemented & browser-verified:* negative-score threads render collapsed with a "show" reveal (`web/e2e/gated.spec.ts`).
 2. **Seamless chat → forum crystallization.** Select a hot stretch of group chat → one tap "Crystallize to forum thread": the messages become a structured, permanently-archived (Arweave) forum OP with backlinks, optionally re-encrypted or made public with member consent.
 3. **DAO-controlled public forums.** Moderation actions in DAO mode are on-chain proposals — pinning, hiding, and bans require a passed vote, making moderation maximally legitimate and auditable.
 4. **Soulbound membership + portable reputation.** Group membership and forum reputation as non-transferable ERC-1155 → your standing follows your identity across communities and can gate features app-wide.
