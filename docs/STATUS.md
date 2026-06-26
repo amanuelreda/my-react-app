@@ -36,6 +36,7 @@ Legend: ✅ implemented & verified · 🟡 scaffold / partial · ⛔ blocked her
 | Group chat (E2EE, roles, ban→rekey) | ✅ | `shared/test/group.test.js` + `web/e2e/group.spec.ts` |
 | Group creation + on-chain roster | ✅ | `web/e2e/group-create.spec.ts`, `sections.spec.ts` |
 | Token-gating | ✅ | `GroupManager` + `ERC20BalanceGate`; `GroupManager.t.sol` |
+| Soulbound / NFT membership | ✅ | `SoulboundMembership.sol` (ERC-1155 subset); executed in `behavior.test.js` (mint/burn, soulbound transfer reverts) |
 | Forums: threads, nested replies | ✅ | `web/e2e/forum-interact.spec.ts`, `sections.spec.ts` |
 | Reputation-weighted voting | ✅ | `indexer` reducer + `web/e2e/forum-interact.spec.ts` |
 | Reputation-gated visibility | ✅ | `web/e2e/gated.spec.ts` |

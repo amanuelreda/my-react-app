@@ -11,6 +11,7 @@ Solidity smart contracts for TeleBlock identity, groups, forums, and reputation.
 | `GroupManager` | Group creation, roles/permissions (bitmask), bans, token-gating (`IGate`), MLS epoch & message-commitment anchoring. |
 | `ForumManager` | Threaded forums, nested posts, reputation-weighted voting, owner/moderator/DAO moderation, chat→forum cross-posting. |
 | `Reputation` | Soulbound reputation (sqrt-dampened voting weight) and achievement badges. |
+| `SoulboundMembership` | ERC-1155-subset membership token; per-group soulbound (non-transferable) flag. GroupManager mints on join / burns on ban. |
 | `gates/ERC20BalanceGate` | Example `IGate` adapter (token-gated groups). |
 
 **Privacy invariant:** no message plaintext or PII is ever stored on-chain — only addresses,

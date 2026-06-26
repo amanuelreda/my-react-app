@@ -88,3 +88,29 @@ test('ForumManager: post, signed weighted vote, DAO-only moderation', async () =
   await fm.send('moderate', [2n, 1, B32('r')], { from: dao }); // hidden
   assert.equal((await fm.call('posts', [2n]))[7], 1); // status = Hidden
 });
+
+test('SoulboundMembership: mint/burn, minter-gated, soulbound transfer reverts', async () => {
+  const chain = await Chain.create();
+  const sbt = await chain.deploy('SoulboundMembership'); // deployer (addr 1) is minter
+  const minter = addr(1);
+  const alice = addr(0xa1);
+  const bob = addr(0xb0b);
+  const groupId = 1n;
+
+  await sbt.expectRevert('mint', [alice.toString(), groupId], { from: addr(9) }); // not minter
+  await sbt.send('mint', [alice.toString(), groupId], { from: minter });
+  assert.equal(await sbt.call('balanceOf', [alice.toString(), groupId]), 1n);
+
+  // Make membership soulbound → transfers revert.
+  await sbt.send('setSoulbound', [groupId, true], { from: minter });
+  await sbt.expectRevert('safeTransferFrom', [alice.toString(), bob.toString(), groupId, 1n, '0x'], { from: alice });
+
+  // Burn on leave/ban.
+  await sbt.send('burn', [alice.toString(), groupId], { from: minter });
+  assert.equal(await sbt.call('balanceOf', [alice.toString(), groupId]), 0n);
+
+  // A non-soulbound id is transferable.
+  await sbt.send('mint', [alice.toString(), 2n], { from: minter });
+  await sbt.send('safeTransferFrom', [alice.toString(), bob.toString(), 2n, 1n, '0x'], { from: alice });
+  assert.equal(await sbt.call('balanceOf', [bob.toString(), 2n]), 1n);
+});
