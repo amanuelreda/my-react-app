@@ -1,8 +1,27 @@
-// Profile section. Apache-2.0
+// Profile + settings section. Apache-2.0
+import { useState } from 'react';
 import { fingerprint } from './LoginScreen';
 import type { Identity } from '../engine/identity';
+import type { Theme } from '../App';
 
-export function ProfileView({ identity }: { identity: Identity }) {
+const THEMES: { key: Theme; label: string }[] = [
+  { key: 'dark', label: 'Dark' },
+  { key: 'light', label: 'Light' },
+  { key: 'amoled', label: 'AMOLED' },
+];
+
+export function ProfileView({
+  identity,
+  theme,
+  setTheme,
+}: {
+  identity: Identity;
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+}) {
+  const [readReceipts, setReadReceipts] = useState(true);
+  const [showOnline, setShowOnline] = useState(true);
+
   const row = (label: string, value: string, testid?: string) => (
     <div className="row" style={{ borderRadius: 10 }}>
       <div className="meta">
@@ -11,6 +30,29 @@ export function ProfileView({ identity }: { identity: Identity }) {
           {value}
         </div>
       </div>
+    </div>
+  );
+
+  const toggle = (label: string, on: boolean, set: (v: boolean) => void, testid: string) => (
+    <div className="row" style={{ borderRadius: 10 }}>
+      <div className="meta">
+        <div className="name">{label}</div>
+      </div>
+      <button
+        data-testid={testid}
+        onClick={() => set(!on)}
+        aria-pressed={on}
+        style={{
+          width: 44,
+          height: 26,
+          borderRadius: 13,
+          background: on ? 'var(--tg-accent)' : 'var(--tg-bg-hover)',
+          position: 'relative',
+          transition: 'background .15s',
+        }}
+      >
+        <span style={{ position: 'absolute', top: 3, left: on ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
+      </button>
     </div>
   );
 
@@ -43,6 +85,27 @@ export function ProfileView({ identity }: { identity: Identity }) {
           {row('Wallet address', identity.address, 'profile-address')}
           {row('E2EE signing key (fingerprint)', fingerprint(identity.signing.publicKey))}
           {row('Status', '🔒 End-to-end encrypted · keys never leave this device')}
+
+          <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Appearance</div>
+          <div className="row" style={{ borderRadius: 10 }}>
+            <div className="meta"><div className="name">Theme</div></div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {THEMES.map((t) => (
+                <button
+                  key={t.key}
+                  data-testid={`theme-${t.key}`}
+                  onClick={() => setTheme(t.key)}
+                  style={{ padding: '6px 12px', borderRadius: 14, fontSize: 13, background: theme === t.key ? 'var(--tg-bg-active)' : 'var(--tg-bg-hover)', color: 'var(--tg-text)' }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Privacy</div>
+          {toggle('Send read receipts', readReceipts, setReadReceipts, 'toggle-receipts')}
+          {toggle('Show online status', showOnline, setShowOnline, 'toggle-online')}
         </div>
       </section>
     </>

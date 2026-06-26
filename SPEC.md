@@ -223,7 +223,7 @@ Format: **As a `<role>`, I want `<capability>`, so that `<benefit>`.** Acceptanc
 - **Profiles**: avatar (IPFS), display name, ENS, bio, links, with **per-field privacy** (public / contacts / private).
 - **Discovery**: trending groups, public forums, recommended users (ranked by on-chain reputation + activity, with explicit opt-in to be discoverable).
 - **Notifications**: Push Protocol channels per group/forum, bridged to APNs/FCM; granular mute.
-- **Settings**: themes, privacy (presence, read receipts, who-can-add-me), **network switcher** (Base/Arbitrum/…), **data export** (encrypted archive), self-destruct defaults.
+- **Settings**: themes (Dark/Light/AMOLED, persisted — *implemented & browser-verified*), privacy (presence, read receipts — *implemented*), **network switcher** (Base/Arbitrum/…), **data export** (encrypted archive), self-destruct defaults.
 - **Future**: WebRTC voice/video with decentralized signaling over Waku; open **bot protocol** (capability-scoped, E2EE-aware).
 
 ---

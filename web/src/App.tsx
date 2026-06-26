@@ -39,13 +39,22 @@ const nowTime = () => {
 const withExpiry = (m: Message): Message =>
   m.ttl ? { ...m, expiresAt: Date.now() + m.ttl * 1000 } : m;
 
+export type Theme = 'dark' | 'light' | 'amoled';
+
 export default function App() {
   const [identity, setIdentity] = useState<Identity | null>(null);
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('tb-theme') as Theme) || 'dark');
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('tb-theme', theme);
+  }, [theme]);
+
   if (!identity) return <LoginScreen onAuthed={setIdentity} />;
-  return <Shell identity={identity} />;
+  return <Shell identity={identity} theme={theme} setTheme={setTheme} />;
 }
 
-function Shell({ identity }: { identity: Identity }) {
+function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme; setTheme: (t: Theme) => void }) {
   const [section, setSection] = useState<Section>('chats');
   const [chats, setChats] = useState<Chat[]>(CHATS);
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
@@ -214,7 +223,7 @@ function Shell({ identity }: { identity: Identity }) {
       ) : section === 'discover' ? (
         <DiscoverView store={readModel} />
       ) : section === 'profile' ? (
-        <ProfileView identity={identity} />
+        <ProfileView identity={identity} theme={theme} setTheme={setTheme} />
       ) : (
         <>
           <ChatList chats={chats} activeId={activeId} onSelect={setActiveId} />

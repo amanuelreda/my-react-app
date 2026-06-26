@@ -19,6 +19,34 @@
   --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Light theme overrides */
+:root[data-theme='light'] {
+  --tg-bg: #ffffff;
+  --tg-bg-panel: #f5f6f8;
+  --tg-bg-list: #ffffff;
+  --tg-bg-hover: #f0f2f5;
+  --tg-bg-active: #e3f1ff;
+  --tg-accent: #3390ec;
+  --tg-bubble-in: #f1f3f5;
+  --tg-bubble-out: #eeffde;
+  --tg-text: #0f1419;
+  --tg-text-secondary: #707579;
+  --tg-hint: #9aa4ad;
+  --tg-divider: #e6e8eb;
+  --tg-read: #4fae4e;
+}
+:root[data-theme='light'] .out .tb-bubble { color: #0f1419; }
+
+/* AMOLED (pure black) overrides */
+:root[data-theme='amoled'] {
+  --tg-bg: #000000;
+  --tg-bg-panel: #0a0a0a;
+  --tg-bg-list: #000000;
+  --tg-bg-hover: #141414;
+  --tg-bubble-in: #1a1a1a;
+  --tg-divider: #000000;
+}
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body {
