@@ -754,7 +754,8 @@ class ChatBubble extends StatelessWidget {
 - [ ] Full wallet login (WalletConnect/SIWE) + on-chain `IdentityRegistry.register` call.
 - [x] The Graph subgraph (schema + manifest + AssemblyScript mappings for all 4 contracts) **and** a custom off-chain indexer (pure event reducer + HTTP read API) — indexer logic **verified** with 8 tests; voting/ranking mirrors `ForumManager.vote()`.
 - [x] Wire client lists to the indexer: Groups (on-chain rosters/roles), Forums (reputation-weighted ranking + nested replies), Discover (top users by reputation) — render real reducer-derived state, **verified in Chromium** (`web/e2e/sections.spec.ts`).
-- [ ] Layer Meilisearch full-text search; swap the in-browser seed for live indexer `fetch()`/subgraph queries.
+- [x] Full-text search across groups/forums/posts/people: inverted index + TF/title-boost + prefix typeahead in the indexer (8 tests), wired into the client's Discover search — **verified in Chromium** (`web/e2e/search.spec.ts`). Meilisearch backs the same interface in production.
+- [ ] Swap the in-browser seed for live indexer `fetch()`/subgraph queries against a deployed testnet.
 - **Exit criteria:** a 200-member group works smoothly on testnet; external code review of crypto core.
 
 ### Phase 2 — Full groups + Forums (weeks 16–30)

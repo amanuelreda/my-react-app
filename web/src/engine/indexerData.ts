@@ -6,6 +6,7 @@
 // would serve. Swapping the seed for a live `fetch()` to the indexer API (or a subgraph query) is a
 // one-line change; the view code does not change.
 import { IndexStore, PERM } from '@teleblock/indexer';
+import { buildSearchIndex } from '@teleblock/indexer/src/search.js';
 
 export { PERM };
 
@@ -79,3 +80,14 @@ export const USER_NAME: Record<string, string> = {
 export const govLabel = (g: string) => ({ owner: '👤 owner', moderatorSet: '🛡️ mods', dao: '🏛️ DAO' }[g] ?? g);
 export const visLabel = (v: string) =>
   ({ public: 'public', private: 'private', tokenGated: '🔑 token-gated' }[v] ?? v);
+
+/** Build the full-text search index over public groups/forums/posts/users using the display metadata. */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export function buildSearch(store: any) {
+  return buildSearchIndex(store, {
+    groups: GROUP_META,
+    forums: FORUM_META,
+    posts: POST_META,
+    users: USER_NAME,
+  });
+}

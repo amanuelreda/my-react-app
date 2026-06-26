@@ -21,6 +21,10 @@ npm start         # run the ingest + API service (needs RPC + deployed addresses
   tail). viem is imported lazily so the reducer tests need no chain.
 - `src/server.js` — dependency-free HTTP read API (`/groups`, `/groups/:id/members`,
   `/forums/:id/threads`, `/posts/:id/replies`, `/users/:addr`).
+- `src/search.js` — `SearchIndex`: an inverted-index full-text search over **public** documents
+  (groups, forums, forum posts, usernames) with TF scoring, a title-field boost, and prefix
+  typeahead on the final token. `buildSearchIndex(store, meta)` populates it from an `IndexStore`.
+  Meilisearch backs the same interface in production; private/E2EE content is never indexed here.
 
 ## Why both an indexer and a subgraph?
 

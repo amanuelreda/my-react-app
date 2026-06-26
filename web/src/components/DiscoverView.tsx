@@ -1,10 +1,16 @@
-// Discover section — trending groups, top forums, top users by reputation. Apache-2.0
-import { useMemo } from 'react';
+// Discover section — search + trending groups, top forums, top users by reputation. Apache-2.0
+import { useMemo, useState } from 'react';
 import { initials } from '../data';
-import { GROUP_META, FORUM_META, USER_NAME, govLabel } from '../engine/indexerData';
+import { GROUP_META, FORUM_META, POST_META, USER_NAME, govLabel, buildSearch } from '../engine/indexerData';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+const TYPE_ICON: Record<string, string> = { group: '👥', forum: '🗂️', post: '💬', user: '👤' };
+
 export function DiscoverView({ store }: { store: any }) {
+  const search = useMemo(() => buildSearch(store), [store]);
+  const [q, setQ] = useState('');
+  const results = useMemo(() => (q.trim() ? search.search(q, { limit: 20 }) : []), [search, q]);
+
   const groups = useMemo(
     () => [...store.listGroups()].sort((a: any, b: any) => b.memberCount - a.memberCount),
     [store],
@@ -18,12 +24,42 @@ export function DiscoverView({ store }: { store: any }) {
     [store],
   );
 
+  const resultSubtitle = (r: any) => {
+    if (r.type === 'post') return POST_META[r.refId]?.preview ?? '';
+    if (r.type === 'group') return 'group';
+    if (r.type === 'forum') return 'forum';
+    return 'person';
+  };
+
   return (
     <>
       <div className="list">
-        <div className="search" style={{ color: 'var(--tg-text-secondary)', fontSize: 13, padding: 14 }}>
-          Discover
+        <div className="search">
+          <input
+            placeholder="Search groups, forums, posts, people"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            data-testid="search-input"
+          />
         </div>
+
+        {q.trim() ? (
+          <div className="rows" data-testid="search-results">
+            {results.length === 0 && <div className="empty" style={{ padding: 24 }}>No results for “{q}”</div>}
+            {results.map((r: any) => (
+              <div key={r.id} className="row" data-result-type={r.type}>
+                <div className="avatar" style={{ background: '#33414d' }}>{TYPE_ICON[r.type] ?? '?'}</div>
+                <div className="meta">
+                  <div className="top">
+                    <span className="name">{r.title}</span>
+                    <span className="time" style={{ textTransform: 'capitalize' }}>{r.type}</span>
+                  </div>
+                  <div className="preview">{resultSubtitle(r)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="rows">
           <div style={{ padding: '6px 14px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Trending groups</div>
           {groups.map((g: any) => {
@@ -52,6 +88,7 @@ export function DiscoverView({ store }: { store: any }) {
             );
           })}
         </div>
+        )}
       </div>
 
       <section className="convo">
