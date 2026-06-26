@@ -57,7 +57,9 @@ const withExpiry = (m: Message): Message =>
 export type Theme = 'dark' | 'light' | 'amoled';
 
 export default function App() {
-  const [identity, setIdentity] = useState<Identity | null>(null);
+  const [accounts, setAccounts] = useState<Identity[]>([]);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [adding, setAdding] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('tb-theme') as Theme) || 'dark');
 
   useEffect(() => {
@@ -65,11 +67,53 @@ export default function App() {
     localStorage.setItem('tb-theme', theme);
   }, [theme]);
 
-  if (!identity) return <LoginScreen onAuthed={setIdentity} />;
-  return <Shell identity={identity} theme={theme} setTheme={setTheme} />;
+  const identity = accounts[activeIdx] ?? null;
+
+  const onAuthed = (id: Identity) => {
+    setAccounts((prev) => {
+      const existing = prev.findIndex((a) => a.address === id.address);
+      if (existing >= 0) {
+        setActiveIdx(existing);
+        return prev;
+      }
+      setActiveIdx(prev.length);
+      return [...prev, id];
+    });
+    setAdding(false);
+  };
+
+  if (!identity) return <LoginScreen onAuthed={onAuthed} />;
+
+  return (
+    <>
+      <Shell
+        key={identity.address}
+        identity={identity}
+        theme={theme}
+        setTheme={setTheme}
+        accounts={accounts}
+        activeIdx={activeIdx}
+        onSwitch={setActiveIdx}
+        onAddAccount={() => setAdding(true)}
+      />
+      {adding && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200 }} data-testid="add-account-overlay">
+          <LoginScreen onAuthed={onAuthed} />
+          <button data-testid="cancel-add-account" aria-label="Cancel" onClick={() => setAdding(false)} style={{ position: 'fixed', top: 16, right: 16, zIndex: 201, fontSize: 22, color: 'var(--tg-text-secondary)' }}>✕</button>
+        </div>
+      )}
+    </>
+  );
 }
 
-function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme; setTheme: (t: Theme) => void }) {
+interface AccountProps {
+  accounts: Identity[];
+  activeIdx: number;
+  onSwitch: (i: number) => void;
+  onAddAccount: () => void;
+}
+
+function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAddAccount }: { identity: Identity; theme: Theme; setTheme: (t: Theme) => void } & AccountProps) {
   const [section, setSection] = useState<Section>('chats');
   const [chats, setChats] = useState<Chat[]>([LOBBY_CHAT, ...CHATS]);
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
@@ -368,7 +412,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
       ) : section === 'discover' ? (
         <DiscoverView store={readModel} onBack={() => setMobileConvo(false)} />
       ) : section === 'profile' ? (
-        <ProfileView identity={identity} theme={theme} setTheme={setTheme} onBack={() => setMobileConvo(false)} />
+        <ProfileView identity={identity} theme={theme} setTheme={setTheme} onBack={() => setMobileConvo(false)} accounts={accounts} activeIdx={activeIdx} onSwitch={onSwitch} onAddAccount={onAddAccount} />
       ) : (
         <>
           <ChatList chats={chats} activeId={activeId} onSelect={setActiveId} onContacts={() => setContactsOpen(true)} />

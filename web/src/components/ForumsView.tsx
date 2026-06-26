@@ -4,9 +4,12 @@ import { useMemo, useState } from 'react';
 import { initials } from '../data';
 import { FORUM_META, POST_META, DYNAMIC_POST_META, USER_NAME, govLabel } from '../engine/indexerData';
 import type { Identity } from '../engine/identity';
-import { encodeVoteCall, encodeCreatePostCall, encodeModerateCall } from '@teleblock/shared';
+import { encodeVoteCall, encodeCreatePostCall, encodeModerateCall, encodeCreateForumCall } from '@teleblock/shared';
 
 const STATUS = { active: 0, hidden: 1, locked: 2, pinned: 3 } as const;
+const ZERO = '0x0000000000000000000000000000000000000000' as const;
+const GOVS = [{ n: 0, label: '👤 Owner' }, { n: 1, label: '🛡️ Mods' }, { n: 2, label: '🏛️ DAO' }];
+const FPAL = ['#5eb5f7', '#e17076', '#7bc862', '#a695e7', '#faa774'];
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const B32 = (s: string) => ('0x' + s.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64)) as `0x${string}`;
@@ -23,13 +26,31 @@ export function ForumsView({ store, identity, onBack }: { store: any; identity: 
   const [extraMeta, setExtraMeta] = useState<Record<string, { title: string; preview: string }>>({});
   const [lastTx, setLastTx] = useState<string>('');
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [forumDraft, setForumDraft] = useState('');
+  const [govDraft, setGovDraft] = useState(0);
+  const [extraForum, setExtraForum] = useState<Record<string, { name: string; color: string }>>({});
   const COLLAPSE_BELOW = 0; // reputation-gated visibility: negative-score posts start collapsed
   const reveal = (id: string) => setRevealed((s) => new Set(s).add(id));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const forums = useMemo(
     () => [...store.forums.values()].map((f: any) => ({ id: f.id, gov: f.gov })),
-    [store],
+    [store, version],
   );
+
+  const createForum = () => {
+    const name = forumDraft.trim();
+    if (!name) return;
+    const id = String(Math.max(0, ...[...store.forums.keys()].map(Number)) + 1);
+    const cid = B32(id + name);
+    store.apply({ name: 'ForumCreated', args: { forumId: id, owner: me, gov: govDraft, visibility: 0 }, blockNumber: 1e9, logIndex: Date.now() });
+    setExtraForum((m) => ({ ...m, [id]: { name, color: FPAL[Number(id) % FPAL.length] } }));
+    setLastTx(`createForum(${GOVS[govDraft].label}) → ${encodeCreateForumCall({ metaCID: cid, gov: govDraft, governor: ZERO, visibility: 0 }).slice(0, 18)}…`);
+    setForumDraft('');
+    setForumId(id);
+    setThreadId(null);
+    setVersion((v) => v + 1);
+  };
   const threads = useMemo(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     () => (forumId ? store.forumThreads(forumId, { sort }) : []),
@@ -37,7 +58,7 @@ export function ForumsView({ store, identity, onBack }: { store: any; identity: 
   );
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const replies = useMemo(() => (threadId ? store.replies(threadId) : []), [store, threadId, version]);
-  const fmeta = (id: string) => FORUM_META[id] ?? { name: `Forum ${id}`, color: '#5eb5f7' };
+  const fmeta = (id: string) => extraForum[id] ?? FORUM_META[id] ?? { name: `Forum ${id}`, color: '#5eb5f7' };
   const pmeta = (id: string) => extraMeta[id] ?? DYNAMIC_POST_META[id] ?? POST_META[id] ?? { title: `Post ${id}`, preview: '' };
 
   const myVote = (postId: string): number => store.posts.get(postId)?.votes?.get(me) ?? 0;
@@ -91,6 +112,13 @@ export function ForumsView({ store, identity, onBack }: { store: any; identity: 
     <>
       <div className="list">
         <div className="search" style={{ color: 'var(--tg-text-secondary)', fontSize: 13, padding: 14 }}>Forums</div>
+        <div className="composer" style={{ borderTop: 'none', borderBottom: '1px solid var(--tg-divider)', gap: 6 }}>
+          <input placeholder="Create a forum…" value={forumDraft} data-testid="new-forum-input" onChange={(e) => setForumDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') createForum(); }} />
+          <select data-testid="forum-gov" value={govDraft} onChange={(e) => setGovDraft(Number(e.target.value))} style={{ background: 'var(--tg-bg-hover)', color: 'var(--tg-text)', border: 'none', borderRadius: 8, fontSize: 12 }}>
+            {GOVS.map((g) => <option key={g.n} value={g.n}>{g.label}</option>)}
+          </select>
+          <button className="send" onClick={createForum} disabled={!forumDraft.trim()} data-testid="create-forum">＋</button>
+        </div>
         <div className="rows" data-testid="forums-list">
           {forums.map((f: any) => (
             <div key={f.id} className={`row ${f.id === forumId ? 'active' : ''}`} onClick={() => { setForumId(f.id); setThreadId(null); }}>

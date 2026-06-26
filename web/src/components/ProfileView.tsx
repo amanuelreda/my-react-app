@@ -17,11 +17,19 @@ export function ProfileView({
   theme,
   setTheme,
   onBack,
+  accounts = [],
+  activeIdx = 0,
+  onSwitch,
+  onAddAccount,
 }: {
   identity: Identity;
   theme: Theme;
   setTheme: (t: Theme) => void;
   onBack?: () => void;
+  accounts?: Identity[];
+  activeIdx?: number;
+  onSwitch?: (i: number) => void;
+  onAddAccount?: () => void;
 }) {
   const [readReceipts, setReadReceipts] = useState(true);
   const [showOnline, setShowOnline] = useState(true);
@@ -123,6 +131,23 @@ export function ProfileView({
           {row('Wallet address', identity.address, 'profile-address')}
           {row('E2EE signing key (fingerprint)', fingerprint(identity.signing.publicKey))}
           {row('Status', '🔒 End-to-end encrypted · keys never leave this device')}
+
+          <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Accounts</div>
+          <div data-testid="accounts-list">
+            {accounts.map((a, i) => (
+              <div key={a.address} className="row" data-testid="account-row" style={{ borderRadius: 10, cursor: 'pointer' }} onClick={() => onSwitch?.(i)}>
+                <div className="avatar" style={{ width: 36, height: 36, background: i === activeIdx ? 'var(--tg-accent)' : '#33414d' }}>{a.address.slice(2, 4).toUpperCase()}</div>
+                <div className="meta">
+                  <div className="name">{a.address.slice(0, 8)}…{a.address.slice(-4)}</div>
+                  <div className="preview">{i === activeIdx ? '✓ active' : 'tap to switch'}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="row" style={{ borderRadius: 10 }}>
+            <div className="meta"><div className="name" style={{ color: 'var(--tg-accent)' }}>＋ Add account</div></div>
+            <button data-testid="add-account" onClick={onAddAccount} style={{ color: 'var(--tg-accent)', fontWeight: 600, fontSize: 14, padding: '6px 10px' }}>Add</button>
+          </div>
 
           <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Appearance</div>
           <div className="row" style={{ borderRadius: 10 }}>
