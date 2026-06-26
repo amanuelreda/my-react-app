@@ -27,6 +27,7 @@ export interface ChatBubbleProps {
   onReply?: () => void;
   onCrosspost?: () => void;
   onPin?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 function Ticks({ status }: { status: Status }) {
@@ -59,12 +60,14 @@ export function ChatBubble({
   onReply,
   onCrosspost,
   onPin,
+  onContextMenu,
 }: ChatBubbleProps) {
   const isVoice = !!mediaUrl && (mediaMime?.startsWith('audio/') ?? false);
   const startX = useRef(0);
   return (
     <div
       style={{ display: 'flex', padding: '1px 12px', margin: '1px 0', justifyContent: outgoing ? 'flex-end' : 'flex-start' }}
+      onContextMenu={onContextMenu}
       onTouchStart={(e) => (startX.current = e.touches[0].clientX)}
       onTouchEnd={(e) => {
         if (e.changedTouches[0].clientX - startX.current > 56) (onReply ?? onSwipeReply)?.();

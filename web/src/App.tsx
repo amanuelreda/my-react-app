@@ -16,6 +16,7 @@ import { DiscoverView } from './components/DiscoverView';
 import { ProfileView } from './components/ProfileView';
 import { ContactsView } from './components/ContactsView';
 import { CallModal } from './components/CallModal';
+import { ContextMenu, type MenuItem } from './components/ContextMenu';
 import type { Contact } from './data';
 import { CHATS, initials, type Chat, type Message, type Section } from './data';
 import { SecretChat, type IncomingMessage } from './engine/secretChat';
@@ -121,6 +122,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
   const [mobileConvo, setMobileConvo] = useState(false); // mobile: showing the detail pane
   const [contactsOpen, setContactsOpen] = useState(false);
   const [callWith, setCallWith] = useState<{ contact: Contact; video: boolean } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
   const room = useRef<LiveRoom | null>(null);
 
   // Open (or create) a 1:1 chat with a contact and focus it.
@@ -355,6 +357,26 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
       }),
     );
 
+  const deleteMessage = (chatId: string, msgId: string) =>
+    setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, messages: c.messages.filter((m) => m.id !== msgId) } : c)));
+
+  // Right-click / long-press a message → context menu of actions.
+  const openMessageMenu = (e: React.MouseEvent, m: Message) => {
+    e.preventDefault();
+    if (!active) return;
+    const items: MenuItem[] = [
+      { icon: '↩', label: 'Reply', onClick: () => setReplyTo({ author: m.outgoing ? 'You' : active.name, preview: m.text || (m.mediaUrl ? '📷 Photo' : 'message') }) },
+      { icon: '👍', label: (m.reactions ?? []).length ? 'Remove reaction' : 'React', onClick: () => toggleReaction(active.id, m.id) },
+      { icon: '📌', label: pinned[active.id] === m.id ? 'Unpin' : 'Pin', onClick: () => setPinned((p) => { const n = { ...p }; if (n[active.id] === m.id) delete n[active.id]; else n[active.id] = m.id; return n; }) },
+    ];
+    if (m.text) {
+      items.push({ icon: '📋', label: 'Copy text', onClick: () => navigator.clipboard?.writeText(m.text).catch(() => {}) });
+      items.push({ icon: '🗂️', label: 'Crystallize to forum', onClick: () => crosspost(m.text) });
+    }
+    items.push({ icon: '🗑️', label: 'Delete', danger: true, onClick: () => deleteMessage(active.id, m.id) });
+    setMenu({ x: e.clientX, y: e.clientY, items });
+  };
+
   // Double-tap a bubble to toggle a 👍 reaction (Telegram-style quick reaction).
   const toggleReaction = (chatId: string, msgId: string) =>
     setChats((prev) =>
@@ -535,6 +557,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
                     }
                     onCrosspost={() => crosspost(m.text)}
                     onPin={() => setPinned((p) => ({ ...p, [active.id]: m.id }))}
+                    onContextMenu={(e) => openMessageMenu(e, m)}
                   />
                 ))}
               </div>
@@ -573,6 +596,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
       )}
 
       {callWith && <CallModal contact={callWith.contact} video={callWith.video} onEnd={() => setCallWith(null)} />}
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
     </div>
   );
 }
