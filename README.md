@@ -17,22 +17,23 @@ only commitments (hashes), rights, and governance — never message content.
   model, scalability strategy, starter code, roadmap, deployment & contribution guide.
 - **[`contracts/`](./contracts)** — Foundry Solidity contracts (`IdentityRegistry`, `GroupManager`,
   `ForumManager`, `Reputation`, `IGate` adapters) with unit + fuzz tests and a deploy script.
-- **[`shared/`](./shared)** — the cryptography core (libsodium AEAD message frames, Ed25519
-  signing, symmetric ratchet, wallet→identity key derivation) with a **passing test suite**.
+- **[`shared/`](./shared)** — the protocol core: cryptography, identity/X3DH, transport, and
+  storage (libsodium AEAD frames, symmetric ratchet, SIWE login, pre-key bundles, an in-memory
+  relay + Waku adapter, content-addressed storage + IPFS adapter) with a **passing 30-test suite**.
 - **[`docs/`](./docs)** — [`THREAT_MODEL.md`](./docs/THREAT_MODEL.md) and architecture ADRs.
 
-### Status — Phase 0 (Foundations), in progress
+### Status — Phase 0 (Foundations) ✅ complete · Phase 1 (MVP) in progress
 
 | Component | State |
 |---|---|
 | Monorepo, CI, license, contributing, threat model | ✅ |
 | Core contracts + Foundry tests (`contracts/`) | ✅ (run with `forge test`) |
-| Crypto core + tests (`shared/`) | ✅ `cd shared && npm install && npm test` → 11 passing |
-| SIWE login + key publication (client) | ⏳ next |
-| Waku relay + IPFS pinning PoC | ⏳ next |
+| Crypto + identity + transport + storage (`shared/`) | ✅ `cd shared && npm install && npm test` → 30 passing |
+| 1:1 session primitives (X3DH → ratchet → AEAD over relay) | ✅ in `shared/` |
+| MLS group integration · client UI · subgraph/indexer | ⏳ Phase 1 next |
 
 ```bash
-# verify the crypto core locally
+# verify the protocol core locally (crypto, SIWE, X3DH, relay, storage)
 cd shared && npm install && npm test
 
 # build & test the contracts (requires Foundry: https://book.getfoundry.sh)

@@ -733,21 +733,24 @@ class ChatBubble extends StatelessWidget {
 
 ## 10. Roadmap
 
-### Phase 0 — Foundations (weeks 0–6)
+### Phase 0 — Foundations ✅ (complete)
 - [x] Monorepo scaffold, CI, license (Apache-2.0), contribution guide, threat model doc.
 - [x] `IdentityRegistry` contract (+ `GroupManager`, `ForumManager`, `Reputation`, `IGate`) with Foundry unit/fuzz tests.
-- [x] Crypto core (libsodium AEAD + Ed25519 frames, symmetric ratchet, wallet→identity key derivation) — **11 tests green** in `shared/`.
-- [ ] SIWE login wiring + key publication flow (client).
-- [ ] Relay PoC (Waku) + IPFS pinning PoC.
+- [x] Crypto core (libsodium AEAD + Ed25519 frames, symmetric ratchet, wallet→identity key derivation).
+- [x] SIWE login + key-publication flow: EIP-4361 verify (viem), stable identity derivation, X25519 pre-key bundles, **X3DH** key agreement, registration payload builder.
+- [x] Transport PoC (Waku adapter + in-memory relay, hashed topics) and IPFS storage PoC (Helia adapter + in-memory content-addressed store, encrypt-before-store).
 
-> Implemented so far in this repo: `contracts/` (4 contracts + gate adapter + tests + deploy script)
-> and `shared/` (verified crypto core). See `contracts/README.md` and `shared/`.
+> **30 tests green** in `shared/` covering AEAD, ratchet forward secrecy, SIWE login, X3DH, an
+> end-to-end 1:1 secret chat routed over the relay, and encrypted content-addressed storage.
+> See `shared/README.md`. Contracts in `contracts/` (4 contracts + gate adapter + tests + deploy).
 
-### Phase 1 — MVP: solid 1:1 + basic groups (weeks 6–16)
-- 1:1 E2EE chat: text, media (IPFS), voice, read receipts, typing, self-destruct.
-- `GroupManager` v1: create group, roles/permissions, invite links, MLS group integration, ban+rekey.
-- Telegram-style UI: chats list, conversation, composer, profile, dark theme.
-- The Graph subgraph + indexer for membership/lists; local search.
+### Phase 1 — MVP: solid 1:1 + basic groups (weeks 6–16) — in progress
+- [x] 1:1 E2EE session primitives: X3DH → ratchet → AEAD frames over a Transport (done in `shared/`).
+- [ ] 1:1 chat UX: text, media (IPFS), voice, read receipts, typing, self-destruct.
+- [x] `GroupManager` v1 contract: create group, roles/permissions, invite/gating, ban + MLS-epoch hook.
+- [ ] MLS group integration (OpenMLS/wasm) wired to `GroupManager` membership.
+- [ ] Telegram-style UI: chats list, conversation, composer, profile, dark theme.
+- [ ] The Graph subgraph + indexer for membership/lists; local search.
 - **Exit criteria:** a 200-member group works smoothly on testnet; external code review of crypto core.
 
 ### Phase 2 — Full groups + Forums (weeks 16–30)

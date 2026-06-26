@@ -10,6 +10,7 @@
     "lint": "node --check src/crypto/message.js"
   },
   "dependencies": {
-    "libsodium-wrappers": "^0.7.13"
+    "libsodium-wrappers": "^0.7.13",
+    "viem": "^2.53.1"
   }
 }
