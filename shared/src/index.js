@@ -45,6 +45,12 @@ export {
 } from './storage/store.js';
 export { createGroupSession, GroupSession } from './group/groupSession.js';
 export {
+  frameHash,
+  buildMerkleRoot,
+  merkleProof,
+  verifyMerkleProof,
+} from './anchor.js';
+export {
   attachMedia,
   loadMedia,
   encodePayload,

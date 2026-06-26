@@ -15,6 +15,7 @@ npm test
 |---|---|
 | `crypto/message.js` | XChaCha20-Poly1305 AEAD message frames, Ed25519 sign/verify, AAD binding, MITM guard, deterministic wallet→identity key derivation |
 | `crypto/ratchet.js` | Symmetric ratchet (`SymmetricChain`) for per-message forward secrecy |
+| `anchor.js` | Merkle commitments over message batches (`frameHash`/`buildMerkleRoot`/`merkleProof`/`verifyMerkleProof`) — tamper-evident "proof of conversation" anchored via `GroupManager.appendCommitment()` |
 | `identity/prekeys.js` | X25519 key material + signed pre-key bundles (authenticity-signed by the Ed25519 identity key) |
 | `identity/x3dh.js` | X3DH key agreement (`initiateSession` / `respondSession`) seeding a session root |
 | `identity/siwe.js` | SIWE (EIP-4361) login build/verify via viem, stable identity challenge, identity provisioning, registration payload for `IdentityRegistry` |
