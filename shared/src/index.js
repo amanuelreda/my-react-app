@@ -34,6 +34,7 @@ export {
   encodeCreateForumCall,
   encodeCreatePostCall,
   encodeVoteCall,
+  encodeModerateCall,
 } from './onchain/contracts.js';
 export { deriveTopic, deriveConversationTopic, InMemoryRelay } from './transport/relay.js';
 export { Conversation } from './transport/conversation.js';

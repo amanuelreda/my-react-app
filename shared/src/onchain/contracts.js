@@ -58,3 +58,8 @@ export function encodeCreatePostCall(forumId, parentId, contentCID, contentHash)
 export function encodeVoteCall(postId, dir) {
   return encodeFunctionData({ abi: FORUM_MANAGER_ABI, functionName: 'vote', args: [BigInt(postId), dir] });
 }
+
+// PostStatus: 0 active, 1 hidden, 2 locked, 3 pinned.
+export function encodeModerateCall(postId, newStatus, reasonCID) {
+  return encodeFunctionData({ abi: FORUM_MANAGER_ABI, functionName: 'moderate', args: [BigInt(postId), newStatus, reasonCID] });
+}

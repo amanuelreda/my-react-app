@@ -4,7 +4,9 @@ import { useMemo, useState } from 'react';
 import { initials } from '../data';
 import { FORUM_META, POST_META, DYNAMIC_POST_META, USER_NAME, govLabel } from '../engine/indexerData';
 import type { Identity } from '../engine/identity';
-import { encodeVoteCall, encodeCreatePostCall } from '@teleblock/shared';
+import { encodeVoteCall, encodeCreatePostCall, encodeModerateCall } from '@teleblock/shared';
+
+const STATUS = { active: 0, hidden: 1, locked: 2, pinned: 3 } as const;
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const B32 = (s: string) => ('0x' + s.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64)) as `0x${string}`;
@@ -47,6 +49,15 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
     const next = cur === dir ? 0 : dir; // toggle
     store.apply({ name: 'Voted', args: { postId, voter: me, dir: next, weight: weight() }, blockNumber: 1e9, logIndex: Date.now() });
     setLastTx(`vote(${postId}, ${next}) → ${encodeVoteCall(postId, next).slice(0, 18)}…`);
+    bump();
+  };
+
+  // Moderation: pin/hide/lock a thread (owner/mod/DAO on-chain; here the demo user acts as a mod).
+  const moderate = (postId: string, statusName: keyof typeof STATUS) => {
+    const cur = store.posts.get(postId)?.status;
+    const next = cur === statusName ? 'active' : statusName; // toggle back to active
+    store.apply({ name: 'Moderated', args: { postId, newStatus: STATUS[next as keyof typeof STATUS] }, blockNumber: 1e9, logIndex: Date.now() });
+    setLastTx(`moderate(${postId}, ${STATUS[next as keyof typeof STATUS]}) → ${encodeModerateCall(postId, STATUS[next as keyof typeof STATUS], B32(postId)).slice(0, 18)}…`);
     bump();
   };
 
@@ -134,9 +145,14 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
               ) : (
               <div className="meta" onClick={() => setThreadId(threadId === t.id ? null : t.id)} style={{ cursor: 'pointer' }}>
                 <div className="top">
-                  <span className="name">{t.status === 'pinned' ? '📌 ' : ''}{pmeta(t.id).title}</span>
+                  <span className="name">{t.status === 'pinned' ? '📌 ' : ''}{t.status === 'locked' ? '🔒 ' : ''}{pmeta(t.id).title}</span>
                 </div>
                 <div className="preview">{pmeta(t.id).preview} · {USER_NAME[t.author] ?? t.author} · {store.replies(t.id).length} replies</div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
+                  <button data-testid="mod-pin" onClick={() => moderate(t.id, 'pinned')} style={{ fontSize: 12, color: t.status === 'pinned' ? 'var(--tg-online)' : 'var(--tg-hint)' }}>{t.status === 'pinned' ? '📌 Unpin' : '📌 Pin'}</button>
+                  <button data-testid="mod-lock" onClick={() => moderate(t.id, 'locked')} style={{ fontSize: 12, color: t.status === 'locked' ? 'var(--tg-read)' : 'var(--tg-hint)' }}>{t.status === 'locked' ? '🔓 Unlock' : '🔒 Lock'}</button>
+                  <button data-testid="mod-hide" onClick={() => moderate(t.id, 'hidden')} style={{ fontSize: 12, color: 'var(--tg-hint)' }}>🚫 Hide</button>
+                </div>
                 {threadId === t.id && (
                   <div data-testid="replies" style={{ marginTop: 8, borderLeft: '2px solid var(--tg-divider)', paddingLeft: 10 }}>
                     {replies.map((r: any) => (
@@ -146,6 +162,9 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
                       </div>
                     ))}
                     {replies.length === 0 && <div style={{ color: 'var(--tg-hint)', fontSize: 13 }}>No replies yet</div>}
+                    {t.status === 'locked' ? (
+                      <div data-testid="locked-note" style={{ color: 'var(--tg-hint)', fontSize: 13, marginTop: 6, fontStyle: 'italic' }}>🔒 Thread locked — replies are disabled</div>
+                    ) : (
                     <div style={{ display: 'flex', gap: 6, marginTop: 6 }} onClick={(e) => e.stopPropagation()}>
                       <input
                         placeholder="Reply…"
@@ -157,6 +176,7 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
                       />
                       <button data-testid="post-reply" onClick={() => postReply(t.id)} disabled={!replyDraft.trim()} style={{ color: 'var(--tg-accent)', fontWeight: 600, fontSize: 13 }}>Reply</button>
                     </div>
+                    )}
                   </div>
                 )}
               </div>

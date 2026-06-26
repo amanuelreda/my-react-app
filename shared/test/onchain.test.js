@@ -11,6 +11,7 @@ import {
   encodeCreateForumCall,
   encodeCreatePostCall,
   encodeVoteCall,
+  encodeModerateCall,
 } from '../src/onchain/contracts.js';
 
 const B32 = (n) => ('0x' + n.toString().padStart(64, '0'));
@@ -56,4 +57,11 @@ test('vote encodes signed direction', () => {
   assert.equal(up.args[1], 1);
   const down = decodeFunctionData({ abi: FORUM_MANAGER_ABI, data: encodeVoteCall(10, -1) });
   assert.equal(down.args[1], -1);
+});
+
+test('moderate encodes postId + status + reason', () => {
+  const d = decodeFunctionData({ abi: FORUM_MANAGER_ABI, data: encodeModerateCall(10, 3, B32(7)) });
+  assert.equal(d.functionName, 'moderate');
+  assert.equal(d.args[0], 10n);
+  assert.equal(d.args[1], 3); // pinned
 });
