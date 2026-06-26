@@ -14,6 +14,9 @@ import { GroupsView } from './components/GroupsView';
 import { ForumsView } from './components/ForumsView';
 import { DiscoverView } from './components/DiscoverView';
 import { ProfileView } from './components/ProfileView';
+import { ContactsView } from './components/ContactsView';
+import { CallModal } from './components/CallModal';
+import type { Contact } from './data';
 import { CHATS, initials, type Chat, type Message, type Section } from './data';
 import { SecretChat, type IncomingMessage } from './engine/secretChat';
 import { LiveRoom, type RoomMessage } from './engine/liveRoom';
@@ -72,7 +75,17 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
   const [lobbyPeer, setLobbyPeer] = useState<string | null>(null);
   const [mobileConvo, setMobileConvo] = useState(false); // mobile: showing the detail pane
+  const [contactsOpen, setContactsOpen] = useState(false);
+  const [callWith, setCallWith] = useState<{ contact: Contact; video: boolean } | null>(null);
   const room = useRef<LiveRoom | null>(null);
+
+  // Open (or create) a 1:1 chat with a contact and focus it.
+  const openChatWith = (c: Contact) => {
+    setChats((prev) => (prev.some((x) => x.id === c.id) ? prev : [...prev, { id: c.id, name: c.name, kind: 'dm', color: c.color, online: c.online, messages: [] }]));
+    setActiveId(c.id);
+    setContactsOpen(false);
+    setMobileConvo(true);
+  };
   const [showInspector, setShowInspector] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
   const [replyTo, setReplyTo] = useState<{ author: string; preview: string } | null>(null);
@@ -358,8 +371,14 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
         <ProfileView identity={identity} theme={theme} setTheme={setTheme} />
       ) : (
         <>
-          <ChatList chats={chats} activeId={activeId} onSelect={setActiveId} />
-          {active ? (
+          <ChatList chats={chats} activeId={activeId} onSelect={setActiveId} onContacts={() => setContactsOpen(true)} />
+          {contactsOpen ? (
+            <ContactsView
+              onClose={() => setContactsOpen(false)}
+              onMessage={openChatWith}
+              onCall={(c, video) => { setContactsOpen(false); setCallWith({ contact: c, video }); }}
+            />
+          ) : active ? (
             <section className="convo">
               <header className="header">
                 <button className="mobile-only" data-testid="mobile-back" aria-label="Back" onClick={() => setMobileConvo(false)} style={{ fontSize: 20, color: 'var(--tg-text-secondary)', marginRight: 4 }}>
@@ -508,6 +527,8 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
           )}
         </>
       )}
+
+      {callWith && <CallModal contact={callWith.contact} video={callWith.video} onEnd={() => setCallWith(null)} />}
     </div>
   );
 }

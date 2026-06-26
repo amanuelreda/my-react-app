@@ -42,6 +42,22 @@ export function initials(name: string): string {
 export const lastPreview = (c: Chat): string =>
   c.messages.length ? c.messages[c.messages.length - 1].text : 'No messages yet';
 
+export interface Contact {
+  id: string; // chat id (existing) or a new dm id
+  name: string;
+  address: string;
+  color: string;
+  online?: boolean;
+  bio?: string;
+}
+
+export const CONTACTS: Contact[] = [
+  { id: 'dm-nadia', name: 'Nadia', address: '0xNADIA…a91f', color: '#e17076', online: true, bio: 'Privacy maximalist · she/her' },
+  { id: 'c-alice', name: 'alice.eth', address: '0xalice…3c20', color: '#6ec9cb', online: false, bio: 'Protocol researcher' },
+  { id: 'c-bob', name: 'bob.eth', address: '0xbob…77d1', color: '#7bc862', online: true, bio: 'Top contributor 🏅' },
+  { id: 'c-carol', name: 'carol.eth', address: '0xcarol…0b4e', color: '#a695e7', online: false, bio: 'Moderator · DAO voter' },
+];
+
 export const CHATS: Chat[] = [
   {
     id: 'dm-nadia',

@@ -6,18 +6,25 @@ export function ChatList({
   chats,
   activeId,
   onSelect,
+  onContacts,
 }: {
   chats: Chat[];
   activeId: string;
   onSelect: (id: string) => void;
+  onContacts?: () => void;
 }) {
   const [q, setQ] = useState('');
   const filtered = chats.filter((c) => c.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <div className="list">
-      <div className="search">
-        <input placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="search" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} style={{ flex: 1 }} />
+        {onContacts && (
+          <button data-testid="open-contacts" title="Contacts" aria-label="Contacts" onClick={onContacts} style={{ fontSize: 20, color: 'var(--tg-text-secondary)', padding: '0 4px' }}>
+            👥
+          </button>
+        )}
       </div>
       <div className="rows">
         {filtered.map((c) => {
