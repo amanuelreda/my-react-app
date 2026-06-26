@@ -61,7 +61,27 @@ input, textarea { font-family: inherit; }
 
 /* layout */
 .app { display: grid; grid-template-columns: 72px 340px 1fr; height: 100%; }
-@media (max-width: 820px) { .app { grid-template-columns: 1fr; } .app .rail, .app .list { display: none; } .app.show-list .list { display: flex; } }
+.mobile-only { display: none !important; }
+.mobile-nav { display: none; }
+
+@media (max-width: 820px) {
+  .app { grid-template-columns: 1fr; }
+  .app .rail { display: none; }
+  .mobile-only { display: inline-flex !important; }
+  /* default: show the list full-width, hide the detail pane (specificity beats base .convo rule) */
+  .app .list { display: flex; padding-bottom: 56px; }
+  .app .convo { display: none; padding-bottom: 56px; }
+  /* once a row is opened, swap to the detail pane */
+  .app.mobile-convo .list { display: none; }
+  .app.mobile-convo .convo { display: flex; }
+  /* bottom tab bar */
+  .mobile-nav {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 54px; z-index: 50;
+    background: var(--tg-bg-panel); border-top: 1px solid var(--tg-divider);
+  }
+  .mobile-nav button { flex: 1; display: grid; place-items: center; font-size: 20px; color: var(--tg-text-secondary); }
+  .mobile-nav button.active { color: var(--tg-accent); }
+}
 
 /* left rail */
 .rail { background: var(--tg-bg-panel); border-right: 1px solid var(--tg-divider);

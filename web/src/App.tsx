@@ -71,6 +71,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
   const [chats, setChats] = useState<Chat[]>([LOBBY_CHAT, ...CHATS]);
   const [activeId, setActiveId] = useState<string>(CHATS[0].id);
   const [lobbyPeer, setLobbyPeer] = useState<string | null>(null);
+  const [mobileConvo, setMobileConvo] = useState(false); // mobile: showing the detail pane
   const room = useRef<LiveRoom | null>(null);
   const [showInspector, setShowInspector] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
@@ -315,16 +316,36 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
 
   const wire = engine.current?.lastWireFrame;
 
+  const goSection = (s: Section) => {
+    setSection(s);
+    setMobileConvo(false);
+  };
+
   return (
-    <div className="app show-list">
+    <div
+      className={`app show-list${mobileConvo ? ' mobile-convo' : ''}`}
+      onClickCapture={(e) => {
+        // Mobile: opening a list row swaps to the detail pane.
+        if (window.innerWidth <= 820 && (e.target as HTMLElement).closest('.list .row')) setMobileConvo(true);
+      }}
+    >
       <nav className="rail">
         {NAV.map((n) => (
-          <button key={n.key} className={section === n.key ? 'active' : ''} title={n.label} onClick={() => setSection(n.key)}>
+          <button key={n.key} className={section === n.key ? 'active' : ''} title={n.label} onClick={() => goSection(n.key)}>
             {n.icon}
           </button>
         ))}
         <div className="spacer" />
         <button title={`You: ${identity.address.slice(0, 6)}… · key ${fingerprint(identity.signing.publicKey)}`}>👤</button>
+      </nav>
+
+      {/* Mobile bottom tab bar */}
+      <nav className="mobile-nav" data-testid="mobile-nav">
+        {NAV.map((n) => (
+          <button key={n.key} className={section === n.key ? 'active' : ''} aria-label={n.label} onClick={() => goSection(n.key)}>
+            {n.icon}
+          </button>
+        ))}
       </nav>
 
       {section === 'groups' ? (
@@ -341,6 +362,9 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
           {active ? (
             <section className="convo">
               <header className="header">
+                <button className="mobile-only" data-testid="mobile-back" aria-label="Back" onClick={() => setMobileConvo(false)} style={{ fontSize: 20, color: 'var(--tg-text-secondary)', marginRight: 4 }}>
+                  ◀
+                </button>
                 <div className="avatar" style={{ width: 40, height: 40, background: active.color }}>
                   {initials(active.name)}
                 </div>
