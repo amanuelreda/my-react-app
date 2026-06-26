@@ -21,6 +21,7 @@ export interface ChatBubbleProps {
   onSwipeReply?: () => void;
   onReact?: () => void;
   onReply?: () => void;
+  onCrosspost?: () => void;
 }
 
 function Ticks({ status }: { status: Status }) {
@@ -48,6 +49,7 @@ export function ChatBubble({
   onSwipeReply,
   onReact,
   onReply,
+  onCrosspost,
 }: ChatBubbleProps) {
   const startX = useRef(0);
   return (
@@ -73,6 +75,16 @@ export function ChatBubble({
           }}
         >
           ↩
+        </button>
+      )}
+      {onCrosspost && text && (
+        <button
+          data-testid="crosspost-btn"
+          title="Crystallize to a forum thread"
+          onClick={onCrosspost}
+          style={{ alignSelf: 'center', order: outgoing ? -1 : 1, opacity: 0.5, color: 'var(--tg-text-secondary)', padding: '0 4px', fontSize: 13 }}
+        >
+          🗂️
         </button>
       )}
       <div

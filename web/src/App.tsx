@@ -16,7 +16,8 @@ import { DiscoverView } from './components/DiscoverView';
 import { ProfileView } from './components/ProfileView';
 import { CHATS, initials, type Chat, type Message, type Section } from './data';
 import { SecretChat, type IncomingMessage } from './engine/secretChat';
-import { buildReadModel } from './engine/indexerData';
+import { buildReadModel, DYNAMIC_POST_META } from './engine/indexerData';
+import { encodeCreatePostCall } from '@teleblock/shared';
 import type { Identity } from './engine/identity';
 import './theme.css';
 
@@ -61,6 +62,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
   const [showInspector, setShowInspector] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
   const [replyTo, setReplyTo] = useState<{ author: string; preview: string } | null>(null);
+  const [banner, setBanner] = useState<string | null>(null);
   const engine = useRef<SecretChat | null>(null);
 
   const appendMessage = (chatId: string, msg: Message) =>
@@ -186,6 +188,20 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
       ),
     );
 
+  // "Crystallize" a chat message into a public forum thread (chat → forum). Applies a PostCreated
+  // event to the shared read model (forum 1) and builds the on-chain createPost() calldata.
+  const FORUM_FOR_CROSSPOST = '1';
+  const crosspost = (text: string) => {
+    if (!text) return;
+    const id = String(Math.max(0, ...[...readModel.posts.keys()].map(Number)) + 1);
+    const cid = ('0x' + (id + text).replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64)) as `0x${string}`;
+    readModel.apply({ name: 'PostCreated', args: { postId: id, forumId: FORUM_FOR_CROSSPOST, parentId: '0', author: identity.address.toLowerCase(), contentCID: cid }, blockNumber: 1e9, logIndex: Date.now() });
+    DYNAMIC_POST_META[id] = { title: `From chat: ${text.slice(0, 40)}`, preview: text };
+    encodeCreatePostCall(FORUM_FOR_CROSSPOST, 0, cid, cid); // calldata ready for on-chain submission
+    setBanner('Posted to the “Protocol & Governance” forum →');
+    setTimeout(() => setBanner(null), 4000);
+  };
+
   // Double-tap a bubble to toggle a 👍 reaction (Telegram-style quick reaction).
   const toggleReaction = (chatId: string, msgId: string) =>
     setChats((prev) =>
@@ -257,6 +273,11 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                 </button>
               </header>
 
+              {banner && (
+                <div data-testid="crosspost-banner" style={{ background: 'var(--tg-bg-active)', color: '#fff', padding: '6px 14px', fontSize: 13 }}>
+                  {banner}
+                </div>
+              )}
               <div className="scroll" data-testid="messages">
                 {active.messages.map((m) => (
                   <ChatBubble
@@ -277,6 +298,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                         preview: m.text || (m.mediaUrl ? '📷 Photo' : ''),
                       })
                     }
+                    onCrosspost={() => crosspost(m.text)}
                   />
                 ))}
               </div>

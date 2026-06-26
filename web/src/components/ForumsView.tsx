@@ -2,7 +2,7 @@
 // indexer (live re-ranking) and encoded as on-chain ForumManager calldata. Apache-2.0
 import { useMemo, useState } from 'react';
 import { initials } from '../data';
-import { FORUM_META, POST_META, USER_NAME, govLabel } from '../engine/indexerData';
+import { FORUM_META, POST_META, DYNAMIC_POST_META, USER_NAME, govLabel } from '../engine/indexerData';
 import type { Identity } from '../engine/identity';
 import { encodeVoteCall, encodeCreatePostCall } from '@teleblock/shared';
 
@@ -33,7 +33,7 @@ export function ForumsView({ store, identity }: { store: any; identity: Identity
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const replies = useMemo(() => (threadId ? store.replies(threadId) : []), [store, threadId, version]);
   const fmeta = (id: string) => FORUM_META[id] ?? { name: `Forum ${id}`, color: '#5eb5f7' };
-  const pmeta = (id: string) => extraMeta[id] ?? POST_META[id] ?? { title: `Post ${id}`, preview: '' };
+  const pmeta = (id: string) => extraMeta[id] ?? DYNAMIC_POST_META[id] ?? POST_META[id] ?? { title: `Post ${id}`, preview: '' };
 
   const myVote = (postId: string): number => store.posts.get(postId)?.votes?.get(me) ?? 0;
 
