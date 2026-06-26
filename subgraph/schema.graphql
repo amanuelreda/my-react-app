@@ -1,0 +1,82 @@
+# TeleBlock subgraph schema — Apache-2.0
+# Indexes ONLY public on-chain state (addresses, CIDs, hashes, roles, scores). No message content.
+
+type User @entity {
+  id: ID! # address
+  signingPubKey: Bytes
+  preKeyBundleCID: String
+  profileCID: String
+  username: Bytes
+  reputation: BigInt!
+  badges: [Badge!]! @derivedFrom(field: "user")
+  memberships: [GroupMember!]! @derivedFrom(field: "user")
+  posts: [Post!]! @derivedFrom(field: "author")
+}
+
+type Group @entity {
+  id: ID! # groupId
+  owner: User!
+  visibility: Int! # 0 public, 1 private, 2 tokenGated
+  metadataCID: Bytes
+  memberCount: Int!
+  lastCommitment: Bytes
+  mlsGroupId: Bytes
+  createdAt: BigInt!
+  members: [GroupMember!]! @derivedFrom(field: "group")
+}
+
+type GroupMember @entity {
+  id: ID! # groupId-address
+  group: Group!
+  user: User!
+  permMask: Int!
+  banned: Boolean!
+  joinedAt: BigInt!
+}
+
+type Forum @entity {
+  id: ID! # forumId
+  owner: User!
+  governance: Int! # 0 owner, 1 moderatorSet, 2 dao
+  visibility: Int!
+  metaCID: Bytes
+  createdAt: BigInt!
+  posts: [Post!]! @derivedFrom(field: "forum")
+  moderators: [Moderator!]! @derivedFrom(field: "forum")
+}
+
+type Moderator @entity {
+  id: ID! # forumId-address
+  forum: Forum!
+  user: User!
+  enabled: Boolean!
+}
+
+type Post @entity {
+  id: ID! # postId
+  forum: Forum!
+  parent: Post
+  author: User!
+  contentCID: Bytes!
+  contentHash: Bytes!
+  score: BigInt!
+  status: Int! # 0 active, 1 hidden, 2 locked, 3 pinned
+  createdAt: BigInt!
+  replies: [Post!]! @derivedFrom(field: "parent")
+  votes: [Vote!]! @derivedFrom(field: "post")
+}
+
+type Vote @entity {
+  id: ID! # postId-voter
+  post: Post!
+  voter: User!
+  direction: Int! # -1, 0, 1
+  weight: BigInt!
+}
+
+type Badge @entity {
+  id: ID! # address-badgeId
+  user: User!
+  badgeId: BigInt!
+  mintedAt: BigInt!
+}

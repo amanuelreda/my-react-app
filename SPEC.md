@@ -752,7 +752,8 @@ class ChatBubble extends StatelessWidget {
 - [x] `GroupManager` v1 contract: create group, roles/permissions, invite/gating, ban + MLS-epoch hook.
 - [x] Wire the web shell to live `@teleblock/shared`: burner identity provisioning + a real X3DH→ratchet→AEAD 1:1 conversation over the relay, **verified running in Chromium via Playwright** (`web/e2e/`).
 - [ ] Full wallet login (WalletConnect/SIWE) + on-chain `IdentityRegistry.register` call.
-- [ ] The Graph subgraph + indexer for membership/lists; local search.
+- [x] The Graph subgraph (schema + manifest + AssemblyScript mappings for all 4 contracts) **and** a custom off-chain indexer (pure event reducer + HTTP read API) — indexer logic **verified** with 8 tests; voting/ranking mirrors `ForumManager.vote()`.
+- [ ] Wire client lists (groups/forums/discovery) to the indexer/subgraph; layer Meilisearch search.
 - **Exit criteria:** a 200-member group works smoothly on testnet; external code review of crypto core.
 
 ### Phase 2 — Full groups + Forums (weeks 16–30)

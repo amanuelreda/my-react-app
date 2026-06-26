@@ -1,0 +1,95 @@
+specVersion: 1.0.0
+description: TeleBlock — identity, groups, forums, and reputation indexed for fast reads.
+repository: https://github.com/amanuelreda/my-react-app
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: IdentityRegistry
+    network: base-sepolia
+    source:
+      abi: IdentityRegistry
+      address: "0x0000000000000000000000000000000000000000" # set after deploy
+      startBlock: 0
+    mapping: &mapping
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      file: ./src/mapping.ts
+      entities: [User, Group, GroupMember, Forum, Moderator, Post, Vote, Badge]
+      abis:
+        - name: IdentityRegistry
+          file: ./abis/IdentityRegistry.json
+        - name: GroupManager
+          file: ./abis/GroupManager.json
+        - name: ForumManager
+          file: ./abis/ForumManager.json
+        - name: Reputation
+          file: ./abis/Reputation.json
+      eventHandlers:
+        - event: Registered(indexed address,bytes,string)
+          handler: handleRegistered
+        - event: KeysRotated(indexed address,bytes,string)
+          handler: handleKeysRotated
+        - event: ProfileUpdated(indexed address,string)
+          handler: handleProfileUpdated
+        - event: UsernameClaimed(indexed address,indexed bytes32)
+          handler: handleUsernameClaimed
+  - kind: ethereum
+    name: GroupManager
+    network: base-sepolia
+    source:
+      abi: GroupManager
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 0
+    mapping:
+      <<: *mapping
+      eventHandlers:
+        - event: GroupCreated(indexed uint256,indexed address,uint8,bytes32)
+          handler: handleGroupCreated
+        - event: MemberJoined(indexed uint256,indexed address,uint16)
+          handler: handleMemberJoined
+        - event: MemberLeft(indexed uint256,indexed address)
+          handler: handleMemberLeft
+        - event: MemberBanned(indexed uint256,indexed address,bytes32)
+          handler: handleMemberBanned
+        - event: RoleChanged(indexed uint256,indexed address,uint16)
+          handler: handleRoleChanged
+        - event: CommitmentAppended(indexed uint256,bytes32,uint256)
+          handler: handleCommitmentAppended
+        - event: MlsEpochRotated(indexed uint256,bytes32)
+          handler: handleMlsEpochRotated
+  - kind: ethereum
+    name: ForumManager
+    network: base-sepolia
+    source:
+      abi: ForumManager
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 0
+    mapping:
+      <<: *mapping
+      eventHandlers:
+        - event: ForumCreated(indexed uint256,indexed address,uint8,uint8)
+          handler: handleForumCreated
+        - event: ModeratorSet(indexed uint256,indexed address,bool)
+          handler: handleModeratorSet
+        - event: PostCreated(indexed uint256,indexed uint256,indexed uint256,address,bytes32)
+          handler: handlePostCreated
+        - event: Voted(indexed uint256,indexed address,int8,uint256)
+          handler: handleVoted
+        - event: Moderated(indexed uint256,uint8,bytes32)
+          handler: handleModerated
+  - kind: ethereum
+    name: Reputation
+    network: base-sepolia
+    source:
+      abi: Reputation
+      address: "0x0000000000000000000000000000000000000000"
+      startBlock: 0
+    mapping:
+      <<: *mapping
+      eventHandlers:
+        - event: Awarded(indexed address,uint256,bytes32,uint256)
+          handler: handleAwarded
+        - event: BadgeMinted(indexed address,indexed uint256)
+          handler: handleBadgeMinted

@@ -24,6 +24,10 @@ only commitments (hashes), rights, and governance — never message content.
 - **[`web/`](./web)** — Telegram-style web client (Vite + React + TS) wired to the **real** crypto:
   burner-identity login and a **live X3DH→ratchet→AEAD 1:1 chat** with an encryption inspector.
   **Builds clean and is verified running in Chromium** via a Playwright E2E test.
+- **[`indexer/`](./indexer)** — off-chain indexer: a pure event reducer turning the contract log
+  into group rosters, forum rankings, reputation, and identities, with an HTTP read API. **8 tests.**
+- **[`subgraph/`](./subgraph)** — The Graph subgraph (schema + manifest + AssemblyScript mappings)
+  indexing all four contracts.
 - **[`docs/`](./docs)** — [`THREAT_MODEL.md`](./docs/THREAT_MODEL.md) and architecture ADRs.
 
 ### Status — Phase 0 (Foundations) ✅ complete · Phase 1 (MVP) in progress
@@ -36,7 +40,8 @@ only commitments (hashes), rights, and governance — never message content.
 | 1:1 (X3DH→ratchet→AEAD) + group (Sender Keys) sessions | ✅ in `shared/` |
 | Telegram-style web UI shell (`web/`) | ✅ `npm --workspace @teleblock/web run build` |
 | Web client wired to live E2EE (browser-verified) | ✅ `cd web && npm run e2e` (Playwright) |
-| Full wallet login · MLS · subgraph/indexer | ⏳ Phase 1/2 next |
+| Off-chain indexer (reducer + API) + subgraph | ✅ `cd indexer && npm test` → 8 passing |
+| Full wallet login · MLS · client↔indexer wiring | ⏳ Phase 1/2 next |
 
 ```bash
 # verify the protocol core locally (crypto, SIWE, X3DH, group sessions, relay, storage)

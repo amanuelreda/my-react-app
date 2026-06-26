@@ -147,9 +147,10 @@ contract ForumManager {
         if (prev == dir) return; // no-op
 
         uint256 w = _weightOf(msg.sender);
-        // remove previous contribution, add new one
-        p.score -= int64(int256(uint256(_abs(prev)) * w));
-        p.score += int64(int256(uint256(_abs(dir)) * w));
+        // Remove the previous signed contribution and add the new one, both at the current weight.
+        // Signed (not abs) so a downvote subtracts and an upvote adds.
+        p.score -= int64(int256(prev) * int256(w));
+        p.score += int64(int256(dir) * int256(w));
         voteOf[postId][msg.sender] = dir;
 
         // reward author reputation when a net upvote is added (not for downvotes / self-votes)
@@ -192,9 +193,5 @@ contract ForumManager {
         if (address(reputation) == address(0)) return 1;
         uint256 w = reputation.weight(user);
         return w == 0 ? 1 : w; // floor weight of 1 so new users can still participate
-    }
-
-    function _abs(int8 v) internal pure returns (uint8) {
-        return v < 0 ? uint8(-v) : uint8(v);
     }
 }

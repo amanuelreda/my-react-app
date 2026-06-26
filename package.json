@@ -6,12 +6,14 @@
   "license": "Apache-2.0",
   "workspaces": [
     "shared",
-    "web"
+    "web",
+    "indexer"
   ],
   "scripts": {
     "test:shared": "npm --workspace @teleblock/shared test",
+    "test:indexer": "npm --workspace @teleblock/indexer test",
     "test:contracts": "cd contracts && forge test -vvv",
-    "test": "npm run test:shared",
+    "test": "npm run test:shared && npm run test:indexer",
     "build:web": "npm --workspace @teleblock/web run build",
     "dev:web": "npm --workspace @teleblock/web run dev"
   },

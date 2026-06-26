@@ -1,0 +1,40 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": false, "internalType": "bytes", "name": "signingPubKey", "type": "bytes" },
+      { "indexed": false, "internalType": "string", "name": "preKeyBundleCID", "type": "string" }
+    ],
+    "name": "Registered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": false, "internalType": "bytes", "name": "newSigningPubKey", "type": "bytes" },
+      { "indexed": false, "internalType": "string", "name": "newPreKeyBundleCID", "type": "string" }
+    ],
+    "name": "KeysRotated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": false, "internalType": "string", "name": "profileCID", "type": "string" }
+    ],
+    "name": "ProfileUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": true, "internalType": "bytes32", "name": "nameHash", "type": "bytes32" }
+    ],
+    "name": "UsernameClaimed",
+    "type": "event"
+  }
+]

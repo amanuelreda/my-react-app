@@ -1,0 +1,56 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "forumId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+      { "indexed": false, "internalType": "uint8", "name": "gov", "type": "uint8" },
+      { "indexed": false, "internalType": "uint8", "name": "visibility", "type": "uint8" }
+    ],
+    "name": "ForumCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "forumId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "mod", "type": "address" },
+      { "indexed": false, "internalType": "bool", "name": "enabled", "type": "bool" }
+    ],
+    "name": "ModeratorSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "postId", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "forumId", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "parentId", "type": "uint256" },
+      { "indexed": false, "internalType": "address", "name": "author", "type": "address" },
+      { "indexed": false, "internalType": "bytes32", "name": "contentCID", "type": "bytes32" }
+    ],
+    "name": "PostCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "postId", "type": "uint256" },
+      { "indexed": true, "internalType": "address", "name": "voter", "type": "address" },
+      { "indexed": false, "internalType": "int8", "name": "dir", "type": "int8" },
+      { "indexed": false, "internalType": "uint256", "name": "weight", "type": "uint256" }
+    ],
+    "name": "Voted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "postId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint8", "name": "newStatus", "type": "uint8" },
+      { "indexed": false, "internalType": "bytes32", "name": "reasonCID", "type": "bytes32" }
+    ],
+    "name": "Moderated",
+    "type": "event"
+  }
+]
