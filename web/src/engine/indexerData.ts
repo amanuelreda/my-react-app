@@ -80,6 +80,13 @@ export const USER_NAME: Record<string, string> = {
 // Display metadata for posts created at runtime (e.g. chat→forum cross-posts), shared across views.
 export const DYNAMIC_POST_META: Record<string, { title: string; preview: string }> = {};
 
+// On-chain achievement badges (soulbound). badgeId → display.
+export const BADGE_META: Record<string, { icon: string; name: string }> = {
+  '1': { icon: '🏅', name: 'Top Contributor' },
+  '2': { icon: '🛡️', name: 'Trusted Moderator' },
+  '3': { icon: '🚀', name: 'Early Builder' },
+};
+
 export const govLabel = (g: string) => ({ owner: '👤 owner', moderatorSet: '🛡️ mods', dao: '🏛️ DAO' }[g] ?? g);
 export const visLabel = (v: string) =>
   ({ public: 'public', private: 'private', tokenGated: '🔑 token-gated' }[v] ?? v);

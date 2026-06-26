@@ -1,7 +1,7 @@
 // Discover section — search + trending groups, top forums, top users by reputation. Apache-2.0
 import { useMemo, useState } from 'react';
 import { initials } from '../data';
-import { GROUP_META, FORUM_META, POST_META, USER_NAME, govLabel, buildSearch } from '../engine/indexerData';
+import { GROUP_META, FORUM_META, POST_META, BADGE_META, USER_NAME, govLabel, buildSearch } from '../engine/indexerData';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TYPE_ICON: Record<string, string> = { group: '👥', forum: '🗂️', post: '💬', user: '👤' };
@@ -104,7 +104,14 @@ export function DiscoverView({ store }: { store: any }) {
               </div>
               <div className="meta">
                 <div className="top">
-                  <span className="name">{USER_NAME[u.address] ?? u.address}</span>
+                  <span className="name">
+                    {USER_NAME[u.address] ?? u.address}
+                    {store.badgesOf(u.address).map((b: string) => (
+                      <span key={b} data-testid="badge" title={BADGE_META[b]?.name ?? `Badge ${b}`} style={{ marginLeft: 5 }}>
+                        {BADGE_META[b]?.icon ?? '🎖️'}
+                      </span>
+                    ))}
+                  </span>
                   <span className="time" style={{ color: 'var(--tg-online)' }}>★ {u.rep}</span>
                 </div>
                 <div className="preview">reputation {u.rep} · weight √rep ≈ {Math.floor(Math.sqrt(u.rep))}</div>
