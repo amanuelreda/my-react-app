@@ -21,9 +21,10 @@ only commitments (hashes), rights, and governance — never message content.
   transport, and storage (libsodium AEAD frames, ratchet, SIWE login, pre-key bundles, Sender-Keys
   group session, in-memory relay + Waku adapter, content-addressed storage + IPFS adapter) with a
   **passing 36-test suite**.
-- **[`web/`](./web)** — Telegram-style web client (Vite + React + TS) wired to the **real** crypto:
-  burner-identity login and a **live X3DH→ratchet→AEAD 1:1 chat** with an encryption inspector.
-  **Builds clean and is verified running in Chromium** via a Playwright E2E test.
+- **[`web/`](./web)** — Telegram-style web client (Vite + React + TS) wired to the **real** crypto
+  and indexer: burner-identity login, a **live X3DH→ratchet→AEAD 1:1 chat** with an encryption
+  inspector, and Groups/Forums/Discover views rendering **real indexer-derived state** (rosters,
+  reputation-weighted thread ranking, nested replies). **Verified in Chromium** (5 Playwright tests).
 - **[`indexer/`](./indexer)** — off-chain indexer: a pure event reducer turning the contract log
   into group rosters, forum rankings, reputation, and identities, with an HTTP read API. **8 tests.**
 - **[`subgraph/`](./subgraph)** — The Graph subgraph (schema + manifest + AssemblyScript mappings)
@@ -41,7 +42,8 @@ only commitments (hashes), rights, and governance — never message content.
 | Telegram-style web UI shell (`web/`) | ✅ `npm --workspace @teleblock/web run build` |
 | Web client wired to live E2EE (browser-verified) | ✅ `cd web && npm run e2e` (Playwright) |
 | Off-chain indexer (reducer + API) + subgraph | ✅ `cd indexer && npm test` → 8 passing |
-| Full wallet login · MLS · client↔indexer wiring | ⏳ Phase 1/2 next |
+| Groups/Forums/Discover wired to indexer (browser-verified) | ✅ `cd web && npm run e2e` (5 tests) |
+| Full wallet login · MLS · Meilisearch search | ⏳ Phase 1/2 next |
 
 ```bash
 # verify the protocol core locally (crypto, SIWE, X3DH, group sessions, relay, storage)

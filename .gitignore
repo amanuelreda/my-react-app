@@ -35,3 +35,4 @@ test-results/
 playwright-report/
 .playwright/
 web/e2e/screenshot.png
+web/e2e/sections.png

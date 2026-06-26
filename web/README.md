@@ -20,6 +20,11 @@ npm run e2e        # Playwright browser test (uses pre-installed Chromium)
   conversation — X3DH key agreement, a symmetric ratchet, and AEAD frames over an in-memory relay,
   with a simulated peer that decrypts and replies. An **encryption inspector** shows the actual
   ciphertext frame on the wire (proving no plaintext leaves the device).
+- **Groups / Forums / Discover wired to the indexer** (`src/engine/indexerData.ts`): these sections
+  render **real state derived from the `@teleblock/indexer` reducer** running in-browser over seed
+  events — on-chain group rosters with roles, reputation-weighted forum thread ranking with nested
+  replies, and people ranked by reputation. Swapping the seed for a live indexer `fetch()` / subgraph
+  query doesn't change the view code.
 - **Telegram-fidelity UI shell:** left rail (Chats · Groups · Forums · Discover · Profile), searchable
   chat list with avatars/unread badges, conversation pane, composer with Enter-to-send.
 - **`ChatBubble`**: accent/gray bubbles, ✓/✓✓ read ticks, lock glyph, reactions, reply quotes,

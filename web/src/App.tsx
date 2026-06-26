@@ -10,8 +10,13 @@ import { ChatBubble } from './components/ChatBubble';
 import { ChatList } from './components/ChatList';
 import { Composer } from './components/Composer';
 import { LoginScreen, fingerprint } from './components/LoginScreen';
+import { GroupsView } from './components/GroupsView';
+import { ForumsView } from './components/ForumsView';
+import { DiscoverView } from './components/DiscoverView';
+import { ProfileView } from './components/ProfileView';
 import { CHATS, initials, type Chat, type Message, type Section } from './data';
 import { SecretChat, type IncomingMessage } from './engine/secretChat';
+import { buildReadModel } from './engine/indexerData';
 import type { Identity } from './engine/identity';
 import './theme.css';
 
@@ -67,10 +72,9 @@ function Shell({ identity }: { identity: Identity }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const visible = useMemo(
-    () => (section === 'groups' ? chats.filter((c) => c.kind === 'group') : chats),
-    [chats, section],
-  );
+  // Read model derived from on-chain events via the real indexer reducer (in-browser).
+  const readModel = useMemo(() => buildReadModel(), []);
+
   const active = chats.find((c) => c.id === activeId) ?? null;
   const isLive = active?.id === LIVE_CHAT_ID;
 
@@ -120,74 +124,85 @@ function Shell({ identity }: { identity: Identity }) {
         <button title={`You: ${identity.address.slice(0, 6)}… · key ${fingerprint(identity.signing.publicKey)}`}>👤</button>
       </nav>
 
-      <ChatList chats={visible} activeId={activeId} onSelect={setActiveId} />
-
-      {active ? (
-        <section className="convo">
-          <header className="header">
-            <div className="avatar" style={{ width: 40, height: 40, background: active.color }}>
-              {initials(active.name)}
-            </div>
-            <div>
-              <div className="title">{active.name}</div>
-              <div className="sub">
-                {active.kind === 'group' ? `${active.members ?? 0} members` : active.online ? 'online' : 'last seen recently'}
-              </div>
-            </div>
-            <button
-              className="lock"
-              onClick={() => setShowInspector((s) => !s)}
-              title="Show the ciphertext that crossed the wire"
-              data-testid="toggle-inspector"
-            >
-              🔒 {isLive ? 'live E2EE' : 'encrypted'}
-            </button>
-          </header>
-
-          <div className="scroll" data-testid="messages">
-            {active.messages.map((m) => (
-              <ChatBubble
-                key={m.id}
-                text={m.text}
-                outgoing={m.outgoing}
-                time={m.time}
-                status={m.status}
-                encrypted={m.encrypted}
-                reactions={m.reactions}
-                replyTo={m.replyTo}
-              />
-            ))}
-          </div>
-
-          {showInspector && isLive && (
-            <div
-              data-testid="inspector"
-              style={{
-                background: '#0b1118',
-                borderTop: '1px solid var(--tg-divider)',
-                padding: '8px 12px',
-                fontFamily: 'ui-monospace, monospace',
-                fontSize: 11,
-                color: 'var(--tg-text-secondary)',
-                maxHeight: 120,
-                overflow: 'auto',
-              }}
-            >
-              <div style={{ color: 'var(--tg-online)', marginBottom: 4 }}>
-                ↑ last frame on the relay (ciphertext only — no plaintext leaves the device):
-              </div>
-              <div style={{ wordBreak: 'break-all' }}>
-                {wire ? JSON.stringify(wire) : 'send a message to inspect the encrypted frame'}
-              </div>
-            </div>
-          )}
-
-          <Composer onSend={send} />
-        </section>
+      {section === 'groups' ? (
+        <GroupsView store={readModel} />
+      ) : section === 'forums' ? (
+        <ForumsView store={readModel} />
+      ) : section === 'discover' ? (
+        <DiscoverView store={readModel} />
+      ) : section === 'profile' ? (
+        <ProfileView identity={identity} />
       ) : (
-        <section className="convo">
-          <div className="empty">Select a chat to start messaging</div>
-        </section>
+        <>
+          <ChatList chats={chats} activeId={activeId} onSelect={setActiveId} />
+          {active ? (
+            <section className="convo">
+              <header className="header">
+                <div className="avatar" style={{ width: 40, height: 40, background: active.color }}>
+                  {initials(active.name)}
+                </div>
+                <div>
+                  <div className="title">{active.name}</div>
+                  <div className="sub">
+                    {active.kind === 'group' ? `${active.members ?? 0} members` : active.online ? 'online' : 'last seen recently'}
+                  </div>
+                </div>
+                <button
+                  className="lock"
+                  onClick={() => setShowInspector((s) => !s)}
+                  title="Show the ciphertext that crossed the wire"
+                  data-testid="toggle-inspector"
+                >
+                  🔒 {isLive ? 'live E2EE' : 'encrypted'}
+                </button>
+              </header>
+
+              <div className="scroll" data-testid="messages">
+                {active.messages.map((m) => (
+                  <ChatBubble
+                    key={m.id}
+                    text={m.text}
+                    outgoing={m.outgoing}
+                    time={m.time}
+                    status={m.status}
+                    encrypted={m.encrypted}
+                    reactions={m.reactions}
+                    replyTo={m.replyTo}
+                  />
+                ))}
+              </div>
+
+              {showInspector && isLive && (
+                <div
+                  data-testid="inspector"
+                  style={{
+                    background: '#0b1118',
+                    borderTop: '1px solid var(--tg-divider)',
+                    padding: '8px 12px',
+                    fontFamily: 'ui-monospace, monospace',
+                    fontSize: 11,
+                    color: 'var(--tg-text-secondary)',
+                    maxHeight: 120,
+                    overflow: 'auto',
+                  }}
+                >
+                  <div style={{ color: 'var(--tg-online)', marginBottom: 4 }}>
+                    ↑ last frame on the relay (ciphertext only — no plaintext leaves the device):
+                  </div>
+                  <div style={{ wordBreak: 'break-all' }}>
+                    {wire ? JSON.stringify(wire) : 'send a message to inspect the encrypted frame'}
+                  </div>
+                </div>
+              )}
+
+              <Composer onSend={send} />
+            </section>
+          ) : (
+            <section className="convo">
+              <div className="empty">Select a chat to start messaging</div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );
