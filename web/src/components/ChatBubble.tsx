@@ -26,6 +26,7 @@ export interface ChatBubbleProps {
   onReact?: () => void;
   onReply?: () => void;
   onCrosspost?: () => void;
+  onPin?: () => void;
 }
 
 function Ticks({ status }: { status: Status }) {
@@ -57,6 +58,7 @@ export function ChatBubble({
   onReact,
   onReply,
   onCrosspost,
+  onPin,
 }: ChatBubbleProps) {
   const isVoice = !!mediaUrl && (mediaMime?.startsWith('audio/') ?? false);
   const startX = useRef(0);
@@ -93,6 +95,16 @@ export function ChatBubble({
           style={{ alignSelf: 'center', order: outgoing ? -1 : 1, opacity: 0.5, color: 'var(--tg-text-secondary)', padding: '0 4px', fontSize: 13 }}
         >
           🗂️
+        </button>
+      )}
+      {onPin && (text || poll) && (
+        <button
+          data-testid="pin-btn"
+          title="Pin this message"
+          onClick={onPin}
+          style={{ alignSelf: 'center', order: outgoing ? -1 : 1, opacity: 0.5, color: 'var(--tg-text-secondary)', padding: '0 4px', fontSize: 13 }}
+        >
+          📌
         </button>
       )}
       <div

@@ -65,6 +65,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
   const [replyTo, setReplyTo] = useState<{ author: string; preview: string } | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
   const [chatSearch, setChatSearch] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<Record<string, string>>({}); // chatId -> pinned msgId
   const engine = useRef<SecretChat | null>(null);
 
   const appendMessage = (chatId: string, msg: Message) =>
@@ -359,6 +360,23 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                   {banner}
                 </div>
               )}
+              {(() => {
+                const pid = pinned[active.id];
+                const pin = pid && active.messages.find((m) => m.id === pid);
+                if (!pin) return null;
+                return (
+                  <div data-testid="pinned-bar" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'var(--tg-bg-panel)', borderBottom: '1px solid var(--tg-divider)', borderLeft: '3px solid var(--tg-accent)' }}>
+                    <span>📌</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ color: 'var(--tg-accent)', fontSize: 12, fontWeight: 600 }}>Pinned message</div>
+                      <div style={{ color: 'var(--tg-text-secondary)', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {pin.text || (pin.poll ? `📊 ${pin.poll.question}` : '📷 media')}
+                      </div>
+                    </div>
+                    <button data-testid="unpin" onClick={() => setPinned((p) => { const n = { ...p }; delete n[active.id]; return n; })} style={{ color: 'var(--tg-hint)', fontSize: 16 }}>✕</button>
+                  </div>
+                );
+              })()}
               <div className="scroll" data-testid="messages">
                 {active.messages
                   .filter((m) => !chatSearch?.trim() || m.text.toLowerCase().includes(chatSearch.toLowerCase()))
@@ -385,6 +403,7 @@ function Shell({ identity, theme, setTheme }: { identity: Identity; theme: Theme
                       })
                     }
                     onCrosspost={() => crosspost(m.text)}
+                    onPin={() => setPinned((p) => ({ ...p, [active.id]: m.id }))}
                   />
                 ))}
               </div>
