@@ -40,6 +40,7 @@ test('groups show on-chain roster with roles', async ({ page }) => {
   await page.getByTestId('create-identity').click();
 
   await page.locator('.rail button', { hasText: '👥' }).click();
+  await page.getByTestId('group-tab-members').click(); // group defaults to the Chat tab
   const members = page.getByTestId('group-members');
   await expect(members).toBeVisible();
   // Owner + promoted admin + member are derived from GroupCreated/MemberJoined/RoleChanged events.

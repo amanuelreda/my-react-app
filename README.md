@@ -46,7 +46,8 @@ only commitments (hashes), rights, and governance — never message content.
 | Off-chain indexer (reducer + API) + subgraph | ✅ `cd indexer && npm test` → 8 passing |
 | Groups/Forums/Discover + search wired to indexer (browser-verified) | ✅ `cd web && npm run e2e` |
 | Wallet (SIWE) login + register() encoding (browser-verified) | ✅ Playwright |
-| Encrypted media attachments + self-destruct (browser-verified) | ✅ 12 Playwright tests |
+| Encrypted media attachments + self-destruct (browser-verified) | ✅ Playwright |
+| Live group chat (Sender Keys E2EE, browser-verified) | ✅ 13 Playwright tests |
 | MLS group crypto · live testnet data | ⏳ Phase 1/2 next |
 
 ```bash

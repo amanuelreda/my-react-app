@@ -746,7 +746,7 @@ class ChatBubble extends StatelessWidget {
 
 ### Phase 1 — MVP: solid 1:1 + basic groups (weeks 6–16) — in progress
 - [x] 1:1 E2EE session primitives: X3DH → ratchet → AEAD frames over a Transport (done in `shared/`).
-- [x] Group E2EE (MVP): **Sender Keys** `GroupSession` — multi-member send/receive, out-of-order handling, and **remove + rotate → removed member loses forward access** (mirrors `GroupManager.ban()`). MLS is the Phase 2 upgrade (O(log n) rekey, stronger PCS) behind the same API.
+- [x] Group E2EE (MVP): **Sender Keys** `GroupSession` — multi-member send/receive, out-of-order handling, and **remove + rotate → removed member loses forward access** (mirrors `GroupManager.ban()`). Wired into a **live in-browser group chat** (local member + simulated members over the relay) — **verified in Chromium** (`web/e2e/group.spec.ts`). MLS is the Phase 2 upgrade (O(log n) rekey, stronger PCS) behind the same API.
 - [x] Telegram-style web UI shell (Vite + React + TS): rail nav, chat list, conversation, `ChatBubble`, composer, read receipts, dark theme — **builds clean** (`web/`).
 - [x] 1:1 chat UX: **encrypted media attachments** (encrypt → IPFS-style store → decrypt → render; per-blob key carried inside the E2EE frame) and **self-destruct timers** — both **verified in Chromium** (`web/e2e/media.spec.ts`). Voice/typing remain.
 - [x] `GroupManager` v1 contract: create group, roles/permissions, invite/gating, ban + MLS-epoch hook.

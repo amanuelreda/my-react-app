@@ -183,7 +183,7 @@ function Shell({ identity }: { identity: Identity }) {
       </nav>
 
       {section === 'groups' ? (
-        <GroupsView store={readModel} />
+        <GroupsView store={readModel} identity={identity} />
       ) : section === 'forums' ? (
         <ForumsView store={readModel} />
       ) : section === 'discover' ? (
