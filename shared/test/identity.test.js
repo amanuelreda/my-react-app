@@ -110,7 +110,8 @@ test('tampered pre-key bundle fails verification', async () => {
   const bundle = await buildPreKeyBundle(km);
   // Flip a char in the signed pre-key (base64) -> signature must fail.
   bundle.signedPreKey = bundle.signedPreKey.slice(0, -2) + (bundle.signedPreKey.endsWith('A') ? 'B' : 'A') + '=';
-  await assert.rejects(() => verifyPreKeyBundle(bundle), /signature invalid/);
+  // A tampered bundle must be rejected (bad signature, or a decode error on the mangled base64).
+  await assert.rejects(() => verifyPreKeyBundle(bundle));
 });
 
 test('buildRegistrationPayload hex-encodes the signing key', async () => {

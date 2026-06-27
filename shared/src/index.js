@@ -52,7 +52,7 @@ export {
   verifyMerkleProof,
   proofHash,
 } from './anchor.js';
-export { safetyNumber } from './safety.js';
+export { safetyNumber, sessionId } from './safety.js';
 export {
   attachMedia,
   loadMedia,

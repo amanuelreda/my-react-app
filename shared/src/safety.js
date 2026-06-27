@@ -28,3 +28,15 @@ export async function safetyNumber(pubA, pubB) {
   }
   return groups.join(' ');
 }
+
+/**
+ * Session-style identifier (Session app): a stable, address-free ID derived from the signing key, so
+ * a contact can be reached without exposing a wallet address (metadata minimization). 66 chars,
+ * "05"-prefixed like Session's X25519 account IDs.
+ * @param {Uint8Array} signingPub
+ * @returns {Promise<string>}
+ */
+export async function sessionId(signingPub) {
+  const sodium = await getSodium();
+  return '05' + sodium.to_hex(sodium.crypto_generichash(32, signingPub, sodium.from_string('TeleBlock/sessionid/v1')));
+}

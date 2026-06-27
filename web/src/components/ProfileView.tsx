@@ -5,7 +5,8 @@ import type { Identity } from '../engine/identity';
 import type { Theme } from '../App';
 import { CONTRACTS, LIVE_MODE, NETWORKS } from '../config';
 import { buildRegisterTx, sendRegister } from '../engine/registration';
-import { encodeClaimUsernameCall } from '@teleblock/shared';
+import { encodeClaimUsernameCall, sessionId } from '@teleblock/shared';
+import { useEffect } from 'react';
 
 const THEMES: { key: Theme; label: string }[] = [
   { key: 'dark', label: 'Dark' },
@@ -38,6 +39,12 @@ export function ProfileView({
   const [publishMsg, setPublishMsg] = useState<string>('');
   const [unameDraft, setUnameDraft] = useState('');
   const [username, setUsername] = useState<string | null>(null);
+  const [sid, setSid] = useState('');
+  const [stealth, setStealth] = useState(false); // Session-style metadata-min: hide the wallet address
+
+  useEffect(() => {
+    sessionId(identity.signing.publicKey).then(setSid);
+  }, [identity]);
 
   const claimUsername = () => {
     const name = unameDraft.trim().replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
@@ -139,7 +146,9 @@ export function ProfileView({
           </div>
         </header>
         <div className="scroll" style={{ padding: 12 }} data-testid="profile">
-          {row('Wallet address', identity.address, 'profile-address')}
+          {stealth
+            ? row('Session ID (address hidden)', sid, 'profile-address')
+            : row('Wallet address', identity.address, 'profile-address')}
           <div className="row" style={{ borderRadius: 10 }}>
             <div className="meta">
               <div className="preview" style={{ textTransform: 'uppercase', fontSize: 11 }}>Username</div>
@@ -193,6 +202,7 @@ export function ProfileView({
           <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Privacy</div>
           {toggle('Send read receipts', readReceipts, setReadReceipts, 'toggle-receipts')}
           {toggle('Show online status', showOnline, setShowOnline, 'toggle-online')}
+          {toggle('Metadata-min: use Session ID, hide address', stealth, setStealth, 'toggle-stealth')}
 
           <div style={{ padding: '14px 8px 6px', color: 'var(--tg-hint)', fontSize: 12, textTransform: 'uppercase' }}>Network</div>
           <div className="row" style={{ borderRadius: 10 }}>

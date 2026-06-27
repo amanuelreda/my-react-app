@@ -54,3 +54,26 @@ test('Status-style: claim a username', async ({ page }) => {
   await page.getByTestId('claim-username').click();
   await expect(page.getByTestId('username')).toHaveText('@satoshi');
 });
+
+test('Session-style: metadata-min mode shows a Session ID and hides the address', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('create-identity').click();
+  await page.locator('.rail button[title="Profile"]').click();
+
+  // Default: wallet address shown.
+  await expect(page.getByTestId('profile-address')).not.toHaveText(/^05[0-9a-f]/);
+  // Enable metadata-min → a 66-char "05…" Session ID replaces the address.
+  await page.getByTestId('toggle-stealth').click();
+  await expect(page.getByTestId('profile-address')).toHaveText(/^05[0-9a-f]{64}$/);
+});
+
+test('Wispr VOBP: the call screen shows a per-call ephemeral key', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('create-identity').click();
+  await page.getByTestId('open-contacts').click();
+  await page.getByTestId('contact-row').first().locator('.meta').click();
+  await page.getByTestId('profile-call').click();
+
+  await expect(page.getByTestId('vobp-key')).toContainText(/VOBP key/);
+  await expect(page.getByTestId('vobp-key')).toContainText(/destroyed on end/);
+});

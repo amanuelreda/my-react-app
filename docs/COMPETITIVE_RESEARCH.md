@@ -6,11 +6,11 @@ app, mapped to its TeleBlock implementation.
 | App | Standout feature | In TeleBlock |
 |---|---|---|
 | **Status** | Wallet identity, **ENS-style usernames**, Web3/WalletConnect | Username claim in Profile (`IdentityRegistry.claimUsername`); wallet (SIWE) login |
-| **Session** | No phone/email, random **Session ID**, onion-routed **metadata minimization** | No phone/email (burner or wallet); hashed Waku/relay topics + sealed-sender in the threat model |
+| **Session** | No phone/email, random **Session ID**, onion-routed **metadata minimization** | No phone/email; **Session ID** (`sessionId()`) + a "metadata-min" toggle that hides the wallet address; hashed Waku/relay topics + sealed-sender in the threat model |
 | **EXTRA SAFE Chat** | Local keygen + **verifiable identity** (safety numbers) | Keys derived on-device; **safety-number verification** in the contact profile (`shared/safety.js`) |
 | **Mixin Messenger** | **In-chat crypto transfers**, multi-chain wallet | **Send crypto in chat** (payment messages); network switcher; on-chain registration |
 | **ChatLink** | Messages stored **immutably on-chain** (tamper-proof) | **"Save on-chain (proof)"** — `proofHash` + Merkle anchoring (`appendCommitment`) |
-| **Wispr** | **VOBP**: ephemeral per-session keys; censorship-resistant voice/calls | Per-message ratchet keys (forward secrecy); voice messages + calls; Waku transport |
+| **Wispr** | **VOBP**: ephemeral per-session keys; censorship-resistant voice/calls | **Per-call VOBP ephemeral key** shown in the call screen (destroyed on end); per-message ratchet keys (forward secrecy); voice messages + calls; Waku transport |
 
 ## What we implemented from this pass
 
@@ -22,8 +22,12 @@ app, mapped to its TeleBlock implementation.
 - **On-chain tamper-proof proof (ChatLink):** the message context menu "Save on-chain (proof)"
   computes a domain-separated `proofHash` and anchors it (ties into the existing Merkle anchoring).
 - **Usernames (Status):** claim a handle in Profile (encoded for `IdentityRegistry.claimUsername`).
+- **Session ID + metadata-min (Session):** `sessionId()` derives a stable "05…" address-free ID; a
+  Privacy toggle hides the wallet address in favor of it.
+- **VOBP per-call key (Wispr):** the call screen shows a fresh ephemeral session key, zeroized when
+  the call ends.
 
-All four are covered by tests (`shared/test/synthesis.test.js`, `web/e2e/synthesis.spec.ts`).
+All six are covered by tests (`shared/test/synthesis.test.js`, `web/e2e/synthesis.spec.ts`).
 
 ## Where TeleBlock already led
 

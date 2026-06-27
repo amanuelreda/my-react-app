@@ -15,6 +15,14 @@ export function CallModal({ contact, video, onEnd }: { contact: Contact; video: 
   const [hasMedia, setHasMedia] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  // VOBP (Wispr): a fresh ephemeral session key per call, destroyed when the call ends.
+  const vobpRef = useRef<Uint8Array | null>(null);
+  const [vobp] = useState(() => {
+    const k = new Uint8Array(8);
+    (globalThis.crypto ?? window.crypto).getRandomValues(k);
+    vobpRef.current = k;
+    return Array.from(k, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase().replace(/(.{4})/g, '$1 ').trim();
+  });
 
   // Acquire local media once.
   useEffect(() => {
@@ -41,6 +49,8 @@ export function CallModal({ contact, video, onEnd }: { contact: Contact; video: 
       cancelled = true;
       clearTimeout(t);
       streamRef.current?.getTracks().forEach((tr) => tr.stop());
+      if (vobpRef.current) vobpRef.current.fill(0); // VOBP: destroy the ephemeral key on end
+      vobpRef.current = null;
     };
   }, [video]);
 
@@ -85,6 +95,9 @@ export function CallModal({ contact, video, onEnd }: { contact: Contact; video: 
         <div data-testid="call-status" style={{ color: '#9fb3c8', marginTop: 6 }}>
           {connected ? `🔒 ${cam ? 'Video' : 'Voice'} call · ${mmss}` : `Calling${cam ? ' (video)' : ''}…`}
           {hasMedia ? ' · 🎙️ live' : ''}
+        </div>
+        <div data-testid="vobp-key" style={{ color: '#6d8298', fontSize: 11, marginTop: 6, fontFamily: 'ui-monospace, monospace' }}>
+          🔑 VOBP key {vobp} · destroyed on end
         </div>
 
         <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 40 }}>

@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { deriveIdentityKey } from '../src/crypto/message.js';
-import { safetyNumber } from '../src/safety.js';
+import { safetyNumber, sessionId } from '../src/safety.js';
 import { proofHash } from '../src/anchor.js';
 import { encodePayload, decodePayload } from '../src/media.js';
 
@@ -25,6 +25,16 @@ test('payment payload round-trips (Mixin in-chat transfer)', () => {
   assert.equal(p.t, 'payment');
   assert.equal(p.payment.asset, 'USDC');
   assert.equal(p.payment.amount, '12.50');
+});
+
+test('session ID is stable, address-free, 05-prefixed (Session)', async () => {
+  const a = await deriveIdentityKey(enc('alice'));
+  const id1 = await sessionId(a.publicKey);
+  const id2 = await sessionId(a.publicKey);
+  assert.equal(id1, id2);
+  assert.match(id1, /^05[0-9a-f]{64}$/);
+  const b = await deriveIdentityKey(enc('bob'));
+  assert.notEqual(id1, await sessionId(b.publicKey));
 });
 
 test('proofHash is deterministic + tamper-evident (ChatLink on-chain record)', async () => {
