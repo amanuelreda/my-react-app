@@ -17,6 +17,20 @@ export function ContactsView({
 }) {
   const [safety, setSafety] = useState<string | null>(null);
   const [verified, setVerified] = useState<Record<string, boolean>>({});
+  const [added, setAdded] = useState<Contact[]>([]);
+  const [newId, setNewId] = useState('');
+  const PAL = ['#e17076', '#6ec9cb', '#7bc862', '#a695e7', '#faa774', '#5eb5f7'];
+
+  // Add a contact by Session ID ("05…") or wallet address — Session-style reachability without a
+  // phone number.
+  const addContact = () => {
+    const id = newId.trim();
+    const ok = /^05[0-9a-f]{64}$/i.test(id) || /^0x[0-9a-fA-F]{40}$/.test(id) || id.endsWith('.eth');
+    if (!ok) return;
+    const short = id.startsWith('05') ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
+    setAdded((prev) => [{ id: `c-${id.slice(2, 10)}`, name: short, address: id, color: PAL[prev.length % PAL.length] }, ...prev]);
+    setNewId('');
+  };
 
   // Compute the safety number from my signing key + a key derived from the contact (demo: derived
   // from their address; in production it's their on-chain Ed25519 key). EXTRA SAFE / Signal-style.
@@ -28,8 +42,8 @@ export function ContactsView({
   const [selected, setSelected] = useState<Contact | null>(null);
 
   const filtered = useMemo(
-    () => CONTACTS.filter((c) => (c.name + ' ' + c.address).toLowerCase().includes(q.toLowerCase())),
-    [q],
+    () => [...added, ...CONTACTS].filter((c) => (c.name + ' ' + c.address).toLowerCase().includes(q.toLowerCase())),
+    [q, added],
   );
 
   if (selected) {
@@ -85,6 +99,18 @@ export function ContactsView({
       </header>
       <div className="search" style={{ padding: 12 }}>
         <input autoFocus data-testid="contacts-search" placeholder="Search contacts" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+      {/* Add a contact by Session ID / wallet address / ENS — Session-style, no phone number. */}
+      <div style={{ display: 'flex', gap: 6, padding: '0 12px 10px' }}>
+        <input
+          data-testid="add-contact-input"
+          placeholder="Add by Session ID (05…), 0x address, or name.eth"
+          value={newId}
+          onChange={(e) => setNewId(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') addContact(); }}
+          style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: 'none', background: 'var(--tg-bg-hover)', color: 'var(--tg-text)', fontSize: 13 }}
+        />
+        <button data-testid="add-contact-btn" onClick={addContact} disabled={!newId.trim()} style={{ color: 'var(--tg-accent)', fontWeight: 600, fontSize: 14, padding: '6px 12px' }}>＋ Add</button>
       </div>
       <div className="scroll" data-testid="contacts-list" style={{ padding: '0 6px' }}>
         {filtered.map((c) => (

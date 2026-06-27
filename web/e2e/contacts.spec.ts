@@ -27,6 +27,30 @@ test('contacts: search, open profile, message and call', async ({ page }) => {
   await expect(page.getByTestId('call-modal')).toHaveCount(0);
 });
 
+test('contacts: add a contact by Session ID (no phone number)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('create-identity').click();
+  await page.getByTestId('open-contacts').click();
+
+  // A 66-char "05…" Session ID — Session-style reachability without a phone/email.
+  const sid = '05' + 'ab'.repeat(32);
+  await page.getByTestId('add-contact-input').fill(sid);
+  await page.getByTestId('add-contact-btn').click();
+
+  // The new contact is prepended to the list and survives a matching search.
+  const list = page.getByTestId('contacts-list');
+  await expect(list.getByTestId('contact-row').first()).toContainText('05ababab');
+  await page.getByTestId('contacts-search').fill(sid);
+  await expect(page.getByTestId('contact-row')).toHaveCount(1);
+
+  // Garbage input is rejected (no new row).
+  await page.getByTestId('contacts-search').fill('');
+  const before = await page.getByTestId('contact-row').count();
+  await page.getByTestId('add-contact-input').fill('not-an-id');
+  await page.getByTestId('add-contact-btn').click();
+  await expect(page.getByTestId('contact-row')).toHaveCount(before);
+});
+
 test('contacts: message opens (creates) a 1:1 chat', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('create-identity').click();

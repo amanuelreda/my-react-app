@@ -21,7 +21,7 @@ export interface ChatBubbleProps {
   mediaMime?: string;
   ttl?: number;
   poll?: PollData;
-  payment?: { asset: string; amount: string; memo?: string };
+  payment?: { asset: string; amount: string; memo?: string; txHash?: string; explorer?: string };
   onPollVote?: (i: number) => void;
   onSwipeReply?: () => void;
   onReact?: () => void;
@@ -164,6 +164,17 @@ export function ChatBubble({
             <div style={{ fontSize: 12, opacity: 0.85 }}>{outgoing ? 'Sent' : 'Received'} payment</div>
             <div style={{ fontSize: 22, fontWeight: 700 }}>{payment.amount} {payment.asset}</div>
             <div style={{ fontSize: 11, opacity: 0.8 }}>⚡ zero-fee · on-chain settlement {payment.memo ? `· ${payment.memo}` : ''}</div>
+            {payment.txHash && (
+              <a
+                data-testid="payment-tx"
+                href={payment.explorer ? `${payment.explorer}/tx/${payment.txHash}` : undefined}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: 11, opacity: 0.9, color: 'inherit', textDecoration: 'underline', display: 'inline-block', marginTop: 4 }}
+              >
+                ⛓ {payment.txHash.slice(0, 10)}…{payment.txHash.slice(-6)}
+              </a>
+            )}
           </div>
         )}
         {text && <span>{text}</span>}

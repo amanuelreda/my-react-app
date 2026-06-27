@@ -17,7 +17,7 @@ export interface Message {
   ttl?: number; // self-destruct seconds
   expiresAt?: number; // epoch ms when this message self-destructs
   poll?: { question: string; options: { text: string; votes: number }[]; voted?: number };
-  payment?: { asset: string; amount: string; memo?: string };
+  payment?: { asset: string; amount: string; memo?: string; txHash?: string; explorer?: string };
 }
 
 export interface Chat {
@@ -28,6 +28,7 @@ export interface Chat {
   members?: number;
   online?: boolean;
   unread?: number;
+  address?: string; // recipient wallet address / Session ID (for 1:1 chats)
   messages: Message[];
 }
 

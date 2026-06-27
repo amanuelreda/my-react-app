@@ -24,6 +24,7 @@ import { LiveRoom, type RoomMessage } from './engine/liveRoom';
 import { buildReadModel, DYNAMIC_POST_META } from './engine/indexerData';
 import { makeWavTone } from './engine/audio';
 import { encodeCreatePostCall, proofHash } from '@teleblock/shared';
+import { canSendOnChain, buildPaymentTx, sendPaymentTx } from './engine/payments';
 import type { Identity } from './engine/identity';
 import './theme.css';
 
@@ -38,6 +39,7 @@ const NAV: { key: Section; icon: string; label: string }[] = [
 const LIVE_CHAT_ID = 'dm-nadia';
 const LOBBY_ID = 'lobby';
 const NETWORK_LABEL = 'Base Sepolia';
+const NETWORK_KEY = 'base-sepolia';
 
 const LOBBY_CHAT: Chat = {
   id: LOBBY_ID,
@@ -128,7 +130,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
 
   // Open (or create) a 1:1 chat with a contact and focus it.
   const openChatWith = (c: Contact) => {
-    setChats((prev) => (prev.some((x) => x.id === c.id) ? prev : [...prev, { id: c.id, name: c.name, kind: 'dm', color: c.color, online: c.online, messages: [] }]));
+    setChats((prev) => (prev.some((x) => x.id === c.id) ? prev : [...prev, { id: c.id, name: c.name, kind: 'dm', color: c.color, online: c.online, address: c.address, messages: [] }]));
     setActiveId(c.id);
     setContactsOpen(false);
     setMobileConvo(true);
@@ -361,11 +363,30 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
   const deleteMessage = (chatId: string, msgId: string) =>
     setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, messages: c.messages.filter((m) => m.id !== msgId) } : c)));
 
-  // In-chat crypto payment (Mixin-style): send an asset to this contact.
-  const sendPayment = (asset: string, amount: string, memo: string) => {
+  // In-chat crypto payment (Mixin-style): send an asset to this contact. When the recipient has a
+  // real wallet address and a wallet provider is connected, settle it on-chain (native ETH value
+  // transfer or ERC-20 transfer) and attach the tx hash; otherwise it stays a local demo bubble.
+  const sendPayment = async (asset: string, amount: string, memo: string) => {
     if (!active) return;
-    appendMessage(active.id, { id: `pay-${Date.now()}`, text: '', outgoing: true, time: nowTime(), status: 'read', encrypted: true, payment: { asset, amount, memo: memo || undefined } });
+    const id = `pay-${Date.now()}`;
+    appendMessage(active.id, { id, text: '', outgoing: true, time: nowTime(), status: 'read', encrypted: true, payment: { asset, amount, memo: memo || undefined } });
+
+    const recipient = active.address ?? '';
+    if (!canSendOnChain(asset, recipient, NETWORK_KEY)) return; // demo / no provider → keep it local
+    try {
+      const prepared = buildPaymentTx({ asset, amount, from: identity.address as `0x${string}`, recipient: recipient as `0x${string}`, networkKey: NETWORK_KEY });
+      const txHash = await sendPaymentTx(prepared);
+      updateMessage(active.id, id, (m) => ({ ...m, payment: { ...m.payment!, txHash, explorer: prepared.network.explorer } }));
+      setBanner(`💸 Sent ${amount} ${asset} on ${prepared.network.name}: ${txHash.slice(0, 14)}…`);
+      setTimeout(() => setBanner(null), 4500);
+    } catch (e) {
+      setBanner(`Payment failed: ${(e as Error).message}`);
+      setTimeout(() => setBanner(null), 4500);
+    }
   };
+
+  const updateMessage = (chatId: string, msgId: string, fn: (m: Message) => Message) =>
+    setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, messages: c.messages.map((m) => (m.id === msgId ? fn(m) : m)) } : c)));
 
   // Save a message on-chain (ChatLink-style tamper-proof record): hash + anchor.
   const saveOnChain = async (m: Message) => {

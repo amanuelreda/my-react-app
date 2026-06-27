@@ -27,7 +27,14 @@ declare global {
   }
 }
 
-type Eip1193 = { request(args: { method: string; params?: unknown[] }): Promise<unknown> };
+export type Eip1193 = { request(args: { method: string; params?: unknown[] }): Promise<unknown> };
+
+// A random 32-byte tx hash for the test provider (no chain to mine against in CI).
+function fakeTxHash(): `0x${string}` {
+  const b = new Uint8Array(32);
+  (globalThis.crypto ?? (window as unknown as { crypto: Crypto }).crypto).getRandomValues(b);
+  return ('0x' + Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('')) as `0x${string}`;
+}
 
 /**
  * A faithful in-page EIP-1193 provider backed by a viem account — used in CI/E2E (set via
@@ -52,6 +59,9 @@ function makeTestProvider(pk: `0x${string}`): Eip1193 {
           const data = (params?.[0] as `0x${string}`); // 0x-hex of the message bytes
           return account.signMessage({ message: { raw: data } });
         }
+        case 'eth_sendTransaction':
+          // No chain to mine against in CI — return a well-formed hash so the UI path is exercised.
+          return fakeTxHash();
         default:
           throw Object.assign(new Error(`unsupported method ${method}`), { code: 4200 });
       }
@@ -59,7 +69,7 @@ function makeTestProvider(pk: `0x${string}`): Eip1193 {
   };
 }
 
-function getProvider(): Eip1193 | null {
+export function getProvider(): Eip1193 | null {
   if (typeof window === 'undefined') return null;
   if (window.ethereum) return window.ethereum;
   if (window.__TB_TEST_PK__) return makeTestProvider(window.__TB_TEST_PK__);
