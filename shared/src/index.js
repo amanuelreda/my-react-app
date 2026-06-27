@@ -50,7 +50,9 @@ export {
   buildMerkleRoot,
   merkleProof,
   verifyMerkleProof,
+  proofHash,
 } from './anchor.js';
+export { safetyNumber } from './safety.js';
 export {
   attachMedia,
   loadMedia,

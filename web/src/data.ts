@@ -17,6 +17,7 @@ export interface Message {
   ttl?: number; // self-destruct seconds
   expiresAt?: number; // epoch ms when this message self-destructs
   poll?: { question: string; options: { text: string; votes: number }[]; voted?: number };
+  payment?: { asset: string; amount: string; memo?: string };
 }
 
 export interface Chat {

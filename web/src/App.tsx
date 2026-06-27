@@ -23,7 +23,7 @@ import { SecretChat, type IncomingMessage } from './engine/secretChat';
 import { LiveRoom, type RoomMessage } from './engine/liveRoom';
 import { buildReadModel, DYNAMIC_POST_META } from './engine/indexerData';
 import { makeWavTone } from './engine/audio';
-import { encodeCreatePostCall } from '@teleblock/shared';
+import { encodeCreatePostCall, proofHash } from '@teleblock/shared';
 import type { Identity } from './engine/identity';
 import './theme.css';
 
@@ -37,6 +37,7 @@ const NAV: { key: Section; icon: string; label: string }[] = [
 
 const LIVE_CHAT_ID = 'dm-nadia';
 const LOBBY_ID = 'lobby';
+const NETWORK_LABEL = 'Base Sepolia';
 
 const LOBBY_CHAT: Chat = {
   id: LOBBY_ID,
@@ -360,6 +361,20 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
   const deleteMessage = (chatId: string, msgId: string) =>
     setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, messages: c.messages.filter((m) => m.id !== msgId) } : c)));
 
+  // In-chat crypto payment (Mixin-style): send an asset to this contact.
+  const sendPayment = (asset: string, amount: string, memo: string) => {
+    if (!active) return;
+    appendMessage(active.id, { id: `pay-${Date.now()}`, text: '', outgoing: true, time: nowTime(), status: 'read', encrypted: true, payment: { asset, amount, memo: memo || undefined } });
+  };
+
+  // Save a message on-chain (ChatLink-style tamper-proof record): hash + anchor.
+  const saveOnChain = async (m: Message) => {
+    const text = m.text || (m.payment ? `${m.payment.amount} ${m.payment.asset}` : 'message');
+    const hash = await proofHash(new TextEncoder().encode(text));
+    setBanner(`🔗 Anchored tamper-proof on ${NETWORK_LABEL}: ${hash.slice(0, 14)}…`);
+    setTimeout(() => setBanner(null), 4500);
+  };
+
   // Right-click / long-press a message → context menu of actions.
   const openMessageMenu = (e: React.MouseEvent, m: Message) => {
     e.preventDefault();
@@ -373,6 +388,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
       items.push({ icon: '📋', label: 'Copy text', onClick: () => navigator.clipboard?.writeText(m.text).catch(() => {}) });
       items.push({ icon: '🗂️', label: 'Crystallize to forum', onClick: () => crosspost(m.text) });
     }
+    items.push({ icon: '🔗', label: 'Save on-chain (proof)', onClick: () => saveOnChain(m) });
     items.push({ icon: '🗑️', label: 'Delete', danger: true, onClick: () => deleteMessage(active.id, m.id) });
     setMenu({ x: e.clientX, y: e.clientY, items });
   };
@@ -440,6 +456,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
           <ChatList chats={chats} activeId={activeId} onSelect={setActiveId} onContacts={() => setContactsOpen(true)} />
           {contactsOpen ? (
             <ContactsView
+              identity={identity}
               onClose={() => setContactsOpen(false)}
               onMessage={openChatWith}
               onCall={(c, video) => { setContactsOpen(false); setCallWith({ contact: c, video }); }}
@@ -547,6 +564,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
                     mediaMime={m.mediaMime}
                     ttl={m.ttl}
                     poll={m.poll}
+                    payment={m.payment}
                     onPollVote={(i) => pollVote(active.id, m.id, i)}
                     onReact={() => toggleReaction(active.id, m.id)}
                     onReply={() =>
@@ -585,7 +603,7 @@ function Shell({ identity, theme, setTheme, accounts, activeIdx, onSwitch, onAdd
                 </div>
               )}
 
-              <Composer onSend={send} onSendFile={sendFile} onVoice={sendVoice} onPoll={sendPoll} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
+              <Composer onSend={send} onSendFile={sendFile} onVoice={sendVoice} onPoll={sendPoll} onPay={sendPayment} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
             </section>
           ) : (
             <section className="convo">

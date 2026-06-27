@@ -63,15 +63,24 @@ export async function loadMedia(store, descriptor, expectedSignerPub = null) {
  */
 
 /**
+ * @typedef {Object} Payment   in-chat crypto transfer (Mixin-style)
+ * @property {string} asset    e.g. 'ETH', 'USDC'
+ * @property {string} amount   decimal string
+ * @property {string} [memo]
+ * @property {string} [txHash] on-chain tx hash once settled
+ */
+
+/**
  * @typedef {Object} MessagePayload
- * @property {'text'|'media'|'poll'} t
- * @property {string} [body]               text (or media caption)
+ * @property {'text'|'media'|'poll'|'payment'} t
+ * @property {string} [body]               text (or media caption / payment memo)
  * @property {MediaDescriptor} [media]
  * @property {Poll} [poll]
+ * @property {Payment} [payment]
  * @property {number} [ttl]                self-destruct seconds (0/undefined = permanent)
  */
 
-const PAYLOAD_TYPES = new Set(['text', 'media', 'poll']);
+const PAYLOAD_TYPES = new Set(['text', 'media', 'poll', 'payment']);
 
 /** @param {MessagePayload} payload @returns {string} */
 export function encodePayload(payload) {

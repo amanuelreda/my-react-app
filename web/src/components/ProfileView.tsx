@@ -5,6 +5,7 @@ import type { Identity } from '../engine/identity';
 import type { Theme } from '../App';
 import { CONTRACTS, LIVE_MODE, NETWORKS } from '../config';
 import { buildRegisterTx, sendRegister } from '../engine/registration';
+import { encodeClaimUsernameCall } from '@teleblock/shared';
 
 const THEMES: { key: Theme; label: string }[] = [
   { key: 'dark', label: 'Dark' },
@@ -35,6 +36,16 @@ export function ProfileView({
   const [showOnline, setShowOnline] = useState(true);
   const [network, setNetwork] = useState('base-sepolia');
   const [publishMsg, setPublishMsg] = useState<string>('');
+  const [unameDraft, setUnameDraft] = useState('');
+  const [username, setUsername] = useState<string | null>(null);
+
+  const claimUsername = () => {
+    const name = unameDraft.trim().replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+    if (!name) return;
+    encodeClaimUsernameCall(name); // calldata for IdentityRegistry.claimUsername(keccak(name))
+    setUsername(name);
+    setUnameDraft('');
+  };
 
   const publishOnChain = async () => {
     try {
@@ -129,6 +140,19 @@ export function ProfileView({
         </header>
         <div className="scroll" style={{ padding: 12 }} data-testid="profile">
           {row('Wallet address', identity.address, 'profile-address')}
+          <div className="row" style={{ borderRadius: 10 }}>
+            <div className="meta">
+              <div className="preview" style={{ textTransform: 'uppercase', fontSize: 11 }}>Username</div>
+              {username ? (
+                <div className="name" data-testid="username">@{username}</div>
+              ) : (
+                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                  <input data-testid="username-input" placeholder="claim a name" value={unameDraft} onChange={(e) => setUnameDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') claimUsername(); }} style={{ flex: 1, padding: '6px 8px', borderRadius: 8, border: 'none', background: 'var(--tg-bg-hover)', color: 'var(--tg-text)' }} />
+                  <button data-testid="claim-username" onClick={claimUsername} disabled={!unameDraft.trim()} style={{ color: 'var(--tg-accent)', fontWeight: 600 }}>Claim</button>
+                </div>
+              )}
+            </div>
+          </div>
           {row('E2EE signing key (fingerprint)', fingerprint(identity.signing.publicKey))}
           {row('Status', '🔒 End-to-end encrypted · keys never leave this device')}
 

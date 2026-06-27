@@ -11,6 +11,18 @@ import { getSodium } from './crypto/message.js';
 const LEAF = 'TeleBlock/anchor/leaf';
 const NODE = 'TeleBlock/anchor/node';
 
+/**
+ * Tamper-proof content digest of arbitrary bytes (e.g. a message), domain-separated. Used by the
+ * "save on-chain" proof (ChatLink-style immutable record): anchor this hash and anyone can later
+ * verify the exact content existed, without revealing it.
+ * @param {Uint8Array} bytes
+ * @returns {Promise<`0x${string}`>}
+ */
+export async function proofHash(bytes) {
+  const sodium = await getSodium();
+  return '0x' + sodium.to_hex(sodium.crypto_generichash(32, bytes, sodium.from_string('TeleBlock/proof/v1')));
+}
+
 /** Hash one message frame (over its signed bytes: nonce||ciphertext||sig) into a 32-byte leaf. */
 export async function frameHash(frame) {
   const sodium = await getSodium();

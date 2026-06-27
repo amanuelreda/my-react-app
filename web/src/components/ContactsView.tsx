@@ -1,16 +1,29 @@
-// Contacts: searchable list → contact profile with Message / Call. Apache-2.0
+// Contacts: searchable list → contact profile with Message / Call / Verify. Apache-2.0
 import { useMemo, useState } from 'react';
 import { CONTACTS, initials, type Contact } from '../data';
+import { safetyNumber, deriveIdentityKey } from '@teleblock/shared';
+import type { Identity } from '../engine/identity';
 
 export function ContactsView({
+  identity,
   onClose,
   onMessage,
   onCall,
 }: {
+  identity: Identity;
   onClose: () => void;
   onMessage: (c: Contact) => void;
   onCall: (c: Contact, video: boolean) => void;
 }) {
+  const [safety, setSafety] = useState<string | null>(null);
+  const [verified, setVerified] = useState<Record<string, boolean>>({});
+
+  // Compute the safety number from my signing key + a key derived from the contact (demo: derived
+  // from their address; in production it's their on-chain Ed25519 key). EXTRA SAFE / Signal-style.
+  const showSafety = async (c: Contact) => {
+    const theirs = await deriveIdentityKey(new TextEncoder().encode(c.address));
+    setSafety(await safetyNumber(identity.signing.publicKey, theirs.publicKey));
+  };
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<Contact | null>(null);
 
@@ -41,7 +54,21 @@ export function ContactsView({
             <ActionBtn testid="profile-video" icon="🎥" label="Video" onClick={() => onCall(c, true)} />
           </div>
           <div style={{ width: '100%', maxWidth: 360 }}>
-            <Row label="🔒 Encryption" value="end-to-end (verify safety number)" />
+            <div className="row" style={{ borderRadius: 10 }}>
+              <div className="meta">
+                <div className="name">🔒 Safety number</div>
+                <div className="preview">{verified[c.id] ? '✅ verified' : 'verify to detect a MITM'}</div>
+              </div>
+              <button data-testid="verify-safety" onClick={() => showSafety(c)} style={{ color: 'var(--tg-accent)', fontWeight: 600, fontSize: 14, padding: '6px 10px' }}>Show</button>
+            </div>
+            {safety && (
+              <div data-testid="safety-number" style={{ background: 'var(--tg-bg-panel)', borderRadius: 10, padding: 12, margin: '4px 0' }}>
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 15, letterSpacing: 1, textAlign: 'center' }}>{safety}</div>
+                <div style={{ textAlign: 'center', marginTop: 8 }}>
+                  <button data-testid="mark-verified" onClick={() => { setVerified((v) => ({ ...v, [c.id]: true })); setSafety(null); }} style={{ color: 'var(--tg-online)', fontWeight: 600 }}>Matches — mark verified</button>
+                </div>
+              </div>
+            )}
             <Row label="🔔 Notifications" value="Enabled" />
             <Row label="🚫 Block contact" value="" danger />
           </div>

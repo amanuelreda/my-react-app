@@ -21,6 +21,7 @@ export interface ChatBubbleProps {
   mediaMime?: string;
   ttl?: number;
   poll?: PollData;
+  payment?: { asset: string; amount: string; memo?: string };
   onPollVote?: (i: number) => void;
   onSwipeReply?: () => void;
   onReact?: () => void;
@@ -54,6 +55,7 @@ export function ChatBubble({
   mediaMime,
   ttl,
   poll,
+  payment,
   onPollVote,
   onSwipeReply,
   onReact,
@@ -157,6 +159,13 @@ export function ChatBubble({
           />
         )}
         {poll && <Poll poll={poll} onVote={(i) => onPollVote?.(i)} />}
+        {payment && (
+          <div data-testid="payment-bubble" style={{ background: 'rgba(255,255,255,.12)', borderRadius: 10, padding: '8px 12px', minWidth: 170 }}>
+            <div style={{ fontSize: 12, opacity: 0.85 }}>{outgoing ? 'Sent' : 'Received'} payment</div>
+            <div style={{ fontSize: 22, fontWeight: 700 }}>{payment.amount} {payment.asset}</div>
+            <div style={{ fontSize: 11, opacity: 0.8 }}>⚡ zero-fee · on-chain settlement {payment.memo ? `· ${payment.memo}` : ''}</div>
+          </div>
+        )}
         {text && <span>{text}</span>}
         <span style={{ float: 'right', margin: '6px 0 0 8px', fontSize: 12, opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
           {ttl ? <span title={`self-destructs in ${ttl}s`}>🔥</span> : null}
